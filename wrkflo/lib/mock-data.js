@@ -385,19 +385,19 @@ export function getProjectByToken(token) {
 }
 
 export const statusColors = {
-  'In Review': 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
-  'Approved': 'bg-green-500/20 text-green-400 border border-green-500/30',
-  'Changes Requested': 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
-  'Draft': 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
-  'Locked': 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+  'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
+  'Approved': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  'Changes Requested': 'bg-red-50 text-red-700 border border-red-200',
+  'Draft': 'bg-gray-50 text-gray-600 border border-gray-200',
+  'Locked': 'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
 export const fileStatusColors = {
-  'draft': 'text-slate-400',
-  'in-review': 'text-blue-400',
-  'changes-requested': 'text-orange-400',
-  'approved': 'text-green-400',
-  'locked': 'text-purple-400',
+  'draft': 'text-gray-500',
+  'in-review': 'text-orange-600',
+  'changes-requested': 'text-red-500',
+  'approved': 'text-emerald-600',
+  'locked': 'text-purple-600',
 };
 
 export const fileStatusLabels = {

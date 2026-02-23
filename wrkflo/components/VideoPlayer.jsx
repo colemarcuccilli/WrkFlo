@@ -17,12 +17,9 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [pendingTimestamp, setPendingTimestamp] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
 
-  // Expose seek method via ref-like pattern
   useEffect(() => {
     if (onSeekToComment) {
-      // Store seek function in window temporarily scoped by file id
       window.__wrkflo_seek = (ts) => {
         if (videoRef.current) {
           videoRef.current.currentTime = ts;
@@ -33,24 +30,16 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
   }, [onSeekToComment]);
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
+    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
   };
 
   const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-    }
+    if (videoRef.current) setDuration(videoRef.current.duration);
   };
 
   const togglePlay = () => {
     if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play();
-    }
+    if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
     setIsPlaying(!isPlaying);
   };
 
@@ -60,11 +49,7 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     const x = e.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, x / rect.width));
     const ts = ratio * (duration || 1);
-
-    if (videoRef.current) {
-      videoRef.current.currentTime = ts;
-      setCurrentTime(ts);
-    }
+    if (videoRef.current) { videoRef.current.currentTime = ts; setCurrentTime(ts); }
     setPendingTimestamp(Math.round(ts));
   }, [duration]);
 
@@ -89,10 +74,7 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
   };
 
   const seekTo = (ts) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = ts;
-      setCurrentTime(ts);
-    }
+    if (videoRef.current) { videoRef.current.currentTime = ts; setCurrentTime(ts); }
     if (onSeekToComment) onSeekToComment(ts);
   };
 
@@ -101,8 +83,8 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Video element */}
-      <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
+      {/* Video */}
+      <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
         <video
           ref={videoRef}
           src={file.url}
@@ -113,12 +95,8 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
-        {/* Play overlay */}
         {!isPlaying && (
-          <div
-            className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/20"
-            onClick={togglePlay}
-          >
+          <div className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/20" onClick={togglePlay}>
             <div className="w-16 h-16 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
               <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
@@ -129,8 +107,8 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
       </div>
 
       {/* Controls */}
-      <div className="bg-slate-800 rounded-lg p-3 space-y-2">
-        {/* Timeline / progress bar with comment markers */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+        {/* Timeline */}
         <div className="relative">
           <div
             ref={progressRef}
@@ -138,94 +116,61 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
             onClick={handleProgressClick}
             title="Click to seek or drop a comment"
           >
-            {/* Track */}
-            <div className="absolute inset-x-0 h-2 bg-slate-700 rounded-full overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)' }}>
-              <div
-                className="h-full bg-indigo-500 rounded-full transition-none"
-                style={{ width: `${progressPct}%` }}
-              />
+            <div className="absolute inset-x-0 h-2 bg-gray-200 rounded-full overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+              <div className="h-full bg-orange-500 rounded-full transition-none" style={{ width: `${progressPct}%` }} />
             </div>
-
-            {/* Comment markers */}
             {videoComments.map((c) => {
               const pct = duration > 0 ? (c.timestamp / duration) * 100 : 0;
               return (
                 <div
                   key={c.id}
-                  className="absolute w-2 h-5 -translate-x-1/2 cursor-pointer z-10 group/marker"
+                  className="absolute w-2 h-5 -translate-x-1/2 cursor-pointer z-10"
                   style={{ left: `${pct}%`, top: '50%', transform: 'translateX(-50%) translateY(-50%)' }}
                   onClick={(e) => { e.stopPropagation(); seekTo(c.timestamp); }}
                   title={`${c.author}: ${c.content}`}
                 >
-                  <div className={`w-2 h-5 rounded-sm ${c.authorRole === 'client' ? 'bg-orange-400' : 'bg-indigo-400'} opacity-80 hover:opacity-100 transition-opacity`} />
+                  <div className={`w-2 h-5 rounded-sm ${c.authorRole === 'client' ? 'bg-orange-500' : 'bg-gray-500'} opacity-80 hover:opacity-100 transition-opacity`} />
                 </div>
               );
             })}
-
-            {/* Playhead */}
-            <div
-              className="absolute w-3 h-3 bg-white rounded-full shadow-lg -translate-x-1/2 -translate-y-1/2 z-20"
-              style={{ left: `${progressPct}%`, top: '50%' }}
-            />
+            <div className="absolute w-3 h-3 bg-orange-600 rounded-full shadow-lg -translate-x-1/2 -translate-y-1/2 z-20" style={{ left: `${progressPct}%`, top: '50%' }} />
           </div>
-
-          <div className="flex justify-between text-xs text-slate-500 mt-0.5">
+          <div className="flex justify-between text-xs text-gray-400 mt-0.5">
             <span>{formatTime(currentTime)}</span>
-            <span className="text-slate-600 text-xs">Click timeline to drop a comment</span>
+            <span className="text-gray-400 text-xs">Click timeline to drop a comment</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
 
-        {/* Playback controls row */}
+        {/* Playback controls */}
         <div className="flex items-center gap-3">
           <button
             onClick={togglePlay}
-            className="w-8 h-8 flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 rounded-full transition-colors"
+            className="w-8 h-8 flex items-center justify-center bg-orange-600 hover:bg-orange-500 rounded-full transition-colors"
           >
             {isPlaying ? (
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
             ) : (
-              <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
             )}
           </button>
-
-          {/* Volume */}
-          <button onClick={toggleMute} className="text-slate-400 hover:text-white transition-colors">
+          <button onClick={toggleMute} className="text-gray-500 hover:text-gray-900 transition-colors">
             {isMuted || volume === 0 ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-              </svg>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
             ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M9 9v6l4-3-4-3z" />
-              </svg>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M9 9v6l4-3-4-3z" /></svg>
             )}
           </button>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={isMuted ? 0 : volume}
-            onChange={handleVolumeChange}
-            className="w-20 h-1 accent-indigo-500"
-          />
-
-          <span className="text-xs text-slate-400 ml-auto">{formatTime(currentTime)} / {formatTime(duration)}</span>
+          <input type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume} onChange={handleVolumeChange} className="w-20 h-1 accent-orange-500" />
+          <span className="text-xs text-gray-500 ml-auto">{formatTime(currentTime)} / {formatTime(duration)}</span>
         </div>
       </div>
 
-      {/* Pending comment input */}
+      {/* Pending comment */}
       {pendingTimestamp !== null && (
-        <div className="bg-slate-800 border border-indigo-500/40 rounded-lg p-3">
-          <p className="text-xs text-indigo-400 mb-2 flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <p className="text-xs text-orange-700 mb-2 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
             Comment at <span className="font-mono font-bold">{formatTime(pendingTimestamp)}</span>
           </p>
           <form
@@ -241,21 +186,10 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
               name="commentText"
               autoFocus
               placeholder="Add your comment..."
-              className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
             />
-            <button
-              type="submit"
-              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
-            >
-              Post
-            </button>
-            <button
-              type="button"
-              onClick={() => setPendingTimestamp(null)}
-              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
+            <button type="submit" className="px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm rounded-lg transition-colors">Post</button>
+            <button type="button" onClick={() => setPendingTimestamp(null)} className="px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm rounded-lg transition-colors">Cancel</button>
           </form>
         </div>
       )}
