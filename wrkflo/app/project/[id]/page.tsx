@@ -1,8 +1,7 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getProjectById, statusColors } from '@/lib/mock-data';
 import FileBrowser from '@/components/FileBrowser';
 import FilePreview from '@/components/FilePreview';
 import CommentFeed from '@/components/CommentFeed';
@@ -10,16 +9,77 @@ import CommentInput from '@/components/CommentInput';
 import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 
+const statusColors: Record<string, string> = {
+  'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
+  'Approved': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  'Changes Requested': 'bg-red-50 text-red-700 border border-red-200',
+  'Draft': 'bg-gray-50 text-gray-600 border border-gray-200',
+  'Locked': 'bg-purple-50 text-purple-700 border border-purple-200',
+};
+
+function normalizeFile(f: any) {
+  return {
+    ...f,
+    uploadDate: f.upload_date || f.uploadDate || '',
+    versions: (f.file_versions || f.versions || []).map((v: any) => ({
+      version: v.version_label || v.version,
+      date: v.created_at ? new Date(v.created_at).toLocaleDateString() : '',
+      notes: v.notes || '',
+    })),
+    comments: (f.comments || []).map((c: any) => ({
+      ...c,
+      id: c.id,
+      author: c.author_name || c.author || 'Unknown',
+      authorRole: c.author_role || c.authorRole || 'client',
+      content: c.content,
+      timestamp: c.timestamp_data || c.timestamp || null,
+      createdAt: c.created_at ? new Date(c.created_at).toLocaleString() : c.createdAt || '',
+    })),
+  };
+}
+
+function normalizeProject(p: any) {
+  return {
+    ...p,
+    client: p.client_name || p.client || 'Unknown Client',
+    creatorName: p.creator_name || 'Creator',
+    reviewToken: p.review_token || p.reviewToken || '',
+    files: (p.files || []).map(normalizeFile),
+  };
+}
+
 export default function ProjectPage() {
   const params = useParams();
   const projectId = params.id as string;
 
-  const baseProject = getProjectById(projectId);
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
 
-  const [project, setProject] = useState(baseProject);
-  const [selectedFileId, setSelectedFileId] = useState(
-    baseProject?.files?.[0]?.id || null
-  );
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.id) {
+          const normalized = normalizeProject(data);
+          setProject(normalized);
+          setSelectedFileId(normalized.files?.[0]?.id || null);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [projectId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -45,7 +105,7 @@ export default function ProjectPage() {
     setSelectedFileId(file.id);
   };
 
-  const handleAddComment = useCallback(({ text, timestamp }: { text: string; timestamp: any }) => {
+  const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
     const newComment = {
       id: `c-new-${Date.now()}`,
       author: 'You',
@@ -54,6 +114,7 @@ export default function ProjectPage() {
       timestamp: timestamp,
       createdAt: new Date().toLocaleString(),
     };
+    // Optimistic update
     setProject((prev: any) => ({
       ...prev,
       files: prev.files.map((f: any) =>
@@ -62,15 +123,42 @@ export default function ProjectPage() {
           : f
       ),
     }));
+    // Persist to DB
+    try {
+      await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: selectedFileId,
+          author_name: 'You',
+          author_role: 'creator',
+          content: text,
+          timestamp_data: timestamp,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to save comment:', e);
+    }
   }, [selectedFileId]);
 
-  const handleStatusChange = useCallback((newStatus: string) => {
+  const handleStatusChange = useCallback(async (newStatus: string) => {
+    // Optimistic update
     setProject((prev: any) => ({
       ...prev,
       files: prev.files.map((f: any) =>
         f.id === selectedFileId ? { ...f, status: newStatus } : f
       ),
     }));
+    // Persist to DB
+    try {
+      await fetch(`/api/files/${selectedFileId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (e) {
+      console.error('Failed to save status:', e);
+    }
   }, [selectedFileId]);
 
   const handleSeekToTimestamp = (ts: number) => {
@@ -79,14 +167,13 @@ export default function ProjectPage() {
     }
   };
 
-  const badgeClass = (statusColors as Record<string, string>)[project.status] || '';
+  const badgeClass = statusColors[project.status] || '';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top bar */}
       <header className="border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-40 flex-shrink-0">
         <div className="h-14 px-4 flex items-center gap-4">
-          {/* Logo + back */}
           <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity">
             <div className="w-7 h-7 bg-orange-600 rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,7 +187,6 @@ export default function ProjectPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
 
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 min-w-0">
             <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex-shrink-0">
               Dashboard
@@ -111,23 +197,20 @@ export default function ProjectPage() {
             <span className="text-sm font-medium text-gray-900 truncate">{project.name}</span>
           </div>
 
-          {/* Status badge */}
           <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
             {project.status}
           </span>
 
-          {/* Progress */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <span className="text-xs text-gray-500">{approvedCount}/{project.files.length} approved</span>
             <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-orange-500 rounded-full"
-                style={{ width: `${(approvedCount / project.files.length) * 100}%` }}
+                style={{ width: `${project.files.length > 0 ? (approvedCount / project.files.length) * 100 : 0}%` }}
               />
             </div>
           </div>
 
-          {/* Right: client info + share */}
           <div className="ml-auto flex items-center gap-3 flex-shrink-0">
             <span className="text-xs text-gray-500 hidden md:block">{project.client}</span>
             <Link
@@ -146,7 +229,6 @@ export default function ProjectPage() {
 
       {/* 3-panel layout */}
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
-        {/* LEFT: File browser */}
         <div className="w-60 flex-shrink-0 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
           <FileBrowser
             files={project.files}
@@ -155,9 +237,7 @@ export default function ProjectPage() {
           />
         </div>
 
-        {/* CENTER: Preview */}
         <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
-          {/* File toolbar */}
           {selectedFile && (
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 bg-white flex-shrink-0">
               <span className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</span>
@@ -166,7 +246,6 @@ export default function ProjectPage() {
               </div>
             </div>
           )}
-
           <div className="flex-1 overflow-hidden">
             <FilePreview
               file={selectedFile}
@@ -177,9 +256,7 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        {/* RIGHT: Feedback panel */}
         <div className="w-80 flex-shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
-          {/* Panel header */}
           <div className="px-4 py-3 border-b border-gray-200 flex-shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">Feedback</h2>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -187,7 +264,6 @@ export default function ProjectPage() {
             </p>
           </div>
 
-          {/* Approval bar */}
           {selectedFile && (
             <div className="px-4 pt-3 flex-shrink-0">
               <ApprovalBar
@@ -197,7 +273,6 @@ export default function ProjectPage() {
             </div>
           )}
 
-          {/* Comments list */}
           <div className="flex-1 overflow-y-auto px-4 py-3">
             <CommentFeed
               comments={fileComments}
@@ -206,7 +281,6 @@ export default function ProjectPage() {
             />
           </div>
 
-          {/* Comment input */}
           <div className="px-4 pb-4 pt-2 border-t border-gray-200 flex-shrink-0">
             <CommentInput
               onSubmit={handleAddComment}

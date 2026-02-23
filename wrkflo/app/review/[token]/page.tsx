@@ -1,8 +1,6 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { getProjectByToken } from '@/lib/mock-data';
 import FileBrowser from '@/components/FileBrowser';
 import FilePreview from '@/components/FilePreview';
 import CommentFeed from '@/components/CommentFeed';
@@ -10,16 +8,70 @@ import CommentInput from '@/components/CommentInput';
 import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 
+function normalizeFile(f: any) {
+  return {
+    ...f,
+    uploadDate: f.upload_date || f.uploadDate || '',
+    versions: (f.file_versions || f.versions || []).map((v: any) => ({
+      version: v.version_label || v.version,
+      date: v.created_at ? new Date(v.created_at).toLocaleDateString() : '',
+      notes: v.notes || '',
+    })),
+    comments: (f.comments || []).map((c: any) => ({
+      ...c,
+      id: c.id,
+      author: c.author_name || c.author || 'Unknown',
+      authorRole: c.author_role || c.authorRole || 'client',
+      content: c.content,
+      timestamp: c.timestamp_data || c.timestamp || null,
+      createdAt: c.created_at ? new Date(c.created_at).toLocaleString() : c.createdAt || '',
+    })),
+  };
+}
+
+function normalizeProject(p: any) {
+  return {
+    ...p,
+    client: p.client_name || p.client || 'Unknown Client',
+    creatorName: p.creator_name || 'Creator',
+    reviewToken: p.review_token || p.reviewToken || '',
+    files: (p.files || []).map(normalizeFile),
+  };
+}
+
 export default function ReviewPage() {
   const params = useParams();
   const token = params.token as string;
 
-  const baseProject = getProjectByToken(token);
-  const [project, setProject] = useState(baseProject);
-  const [selectedFileId, setSelectedFileId] = useState(
-    baseProject?.files?.[0]?.id || null
-  );
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [allApproved, setAllApproved] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/review/${token}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.id) {
+          const normalized = normalizeProject(data);
+          setProject(normalized);
+          setSelectedFileId(normalized.files?.[0]?.id || null);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading review...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -49,7 +101,7 @@ export default function ReviewPage() {
     setSelectedFileId(file.id);
   };
 
-  const handleAddComment = useCallback(({ text, timestamp }: { text: string; timestamp: any }) => {
+  const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
     const newComment = {
       id: `c-client-${Date.now()}`,
       author: 'You (Client)',
@@ -58,6 +110,7 @@ export default function ReviewPage() {
       timestamp: timestamp,
       createdAt: new Date().toLocaleString(),
     };
+    // Optimistic update
     setProject((prev: any) => ({
       ...prev,
       files: prev.files.map((f: any) =>
@@ -66,9 +119,26 @@ export default function ReviewPage() {
           : f
       ),
     }));
+    // Persist to DB
+    try {
+      await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: selectedFileId,
+          author_name: 'Client',
+          author_role: 'client',
+          content: text,
+          timestamp_data: timestamp,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to save comment:', e);
+    }
   }, [selectedFileId]);
 
-  const handleStatusChange = useCallback((newStatus: string) => {
+  const handleStatusChange = useCallback(async (newStatus: string) => {
+    // Optimistic update
     setProject((prev: any) => {
       const updated = {
         ...prev,
@@ -82,6 +152,16 @@ export default function ReviewPage() {
       if (allDone) setAllApproved(true);
       return updated;
     });
+    // Persist to DB
+    try {
+      await fetch(`/api/files/${selectedFileId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (e) {
+      console.error('Failed to save status:', e);
+    }
   }, [selectedFileId]);
 
   const handleSeekToTimestamp = (ts: number) => {
@@ -112,7 +192,6 @@ export default function ReviewPage() {
             </div>
           </div>
 
-          {/* Progress pill */}
           <div className="hidden md:flex items-center gap-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-32 h-1.5 bg-orange-200 rounded-full overflow-hidden">
@@ -127,7 +206,6 @@ export default function ReviewPage() {
         </div>
       </div>
 
-      {/* All approved celebration */}
       {allApproved && (
         <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-3 flex items-center gap-3">
           <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,9 +217,7 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {/* 3-panel layout */}
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
-        {/* LEFT: File browser */}
         <div className="w-60 flex-shrink-0 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
           <FileBrowser
             files={project.files}
@@ -150,7 +226,6 @@ export default function ReviewPage() {
           />
         </div>
 
-        {/* CENTER: Preview */}
         <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
           {selectedFile && (
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 bg-white flex-shrink-0">
@@ -160,7 +235,6 @@ export default function ReviewPage() {
               </div>
             </div>
           )}
-
           <div className="flex-1 overflow-hidden">
             <FilePreview
               file={selectedFile}
@@ -171,7 +245,6 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        {/* RIGHT: Feedback panel */}
         <div className="w-80 flex-shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 flex-shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">Your Feedback</h2>
@@ -180,7 +253,6 @@ export default function ReviewPage() {
             </p>
           </div>
 
-          {/* Approval actions */}
           {selectedFile && (
             <div className="px-4 pt-3 flex-shrink-0">
               <ApprovalBar
@@ -190,14 +262,12 @@ export default function ReviewPage() {
             </div>
           )}
 
-          {/* Comment callout */}
           <div className="mx-4 mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 flex-shrink-0">
             <p className="text-xs text-gray-500 leading-relaxed">
               Leave comments below or click directly on the {selectedFile?.type === 'image' ? 'image to pin feedback' : selectedFile?.type === 'video' || selectedFile?.type === 'audio' ? 'timeline to timestamp your feedback' : 'file to annotate'}.
             </p>
           </div>
 
-          {/* Comments list */}
           <div className="flex-1 overflow-y-auto px-4 py-3">
             <CommentFeed
               comments={fileComments}
@@ -206,7 +276,6 @@ export default function ReviewPage() {
             />
           </div>
 
-          {/* Comment input */}
           <div className="px-4 pb-4 pt-2 border-t border-gray-200 flex-shrink-0">
             <CommentInput
               onSubmit={handleAddComment}
