@@ -106,33 +106,41 @@ export default function FilePreview({ file, comments, onAddComment, onSeekToTime
       )}
 
       {(file.type === 'document' || file.type === 'pdf') && (
-        <div className="flex flex-col items-center justify-center py-16 bg-gray-50 border border-gray-200 rounded-lg">
-          <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p className="text-gray-700 font-semibold">{file.name}</p>
-          <p className="text-orange-500 text-sm font-medium mt-0.5">PDF / Document</p>
-          <div className="mt-5 bg-white border border-gray-200 rounded-lg p-5 max-w-md w-full shadow-sm">
-            <div className="space-y-2.5">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-2 bg-gray-100 rounded" style={{ width: `${55 + (i * 13) % 40}%` }} />
-              ))}
-            </div>
-            <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
-              <p className="text-xs text-amber-600 font-medium">⚡ PDF preview coming soon</p>
-              {file.url && (
+        <div className="flex flex-col gap-3">
+          {file.url ? (
+            <>
+              {/* Try to embed via Google Docs Viewer */}
+              <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-200" style={{ height: '70vh' }}>
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(file.url)}&embedded=true`}
+                  className="w-full h-full"
+                  title={file.name}
+                  loading="lazy"
+                  onError={() => {}}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>Preview via Google Docs · some files may not load</span>
                 <a
                   href={file.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+                  className="text-orange-600 hover:text-orange-700 font-medium"
                 >
-                  Open →
+                  Open original →
                 </a>
-              )}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 bg-gray-50 border border-gray-200 rounded-lg">
+              <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-gray-700 font-semibold">{file.name}</p>
+              <p className="text-orange-500 text-sm font-medium mt-0.5">PDF / Document</p>
+              <p className="text-xs text-gray-400 mt-3">No preview available — leave feedback in the comments panel</p>
             </div>
-          </div>
-          <p className="text-xs text-gray-400 mt-3">Leave comments in the panel on the right</p>
+          )}
         </div>
       )}
 
