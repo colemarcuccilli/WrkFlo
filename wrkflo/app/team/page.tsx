@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const teamMembers = [
@@ -165,6 +165,14 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
 export default function TeamPage() {
   const [showInvite, setShowInvite] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(data => setStats(data))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -216,11 +224,11 @@ export default function TeamPage() {
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
             <p className="text-xs text-gray-500 mb-1">Active Projects</p>
-            <p className="text-2xl font-bold text-orange-600">6</p>
+            <p className="text-2xl font-bold text-orange-600">{stats?.activeProjects ?? '—'}</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
             <p className="text-xs text-gray-500 mb-1">Deliverables This Month</p>
-            <p className="text-2xl font-bold text-emerald-600">41</p>
+            <p className="text-2xl font-bold text-emerald-600">{stats?.deliverableThisMonth ?? '—'}</p>
           </div>
         </div>
 
