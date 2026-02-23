@@ -142,3 +142,11 @@ $$ language plpgsql;
 create trigger update_projects_updated_at
   before update on public.projects
   for each row execute procedure update_updated_at_column();
+
+
+-- Waitlist table (landing page early access)
+create table if not exists waitlist (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  created_at timestamptz default now()
+);
