@@ -11,6 +11,7 @@ import CompletionCelebration from '@/components/CompletionCelebration';
 import MobileCommentSheet from '@/components/MobileCommentSheet';
 import GuestNameModal from '@/components/GuestNameModal';
 import RealtimeComments from '@/components/RealtimeComments';
+import ReviewPasswordGate from '@/components/ReviewPasswordGate';
 
 function normalizeFile(f: any) {
   return {
@@ -53,6 +54,7 @@ export default function ReviewPage() {
   const [allApproved, setAllApproved] = useState(false);
   const [showMobileComment, setShowMobileComment] = useState(false);
   const [guestName, setGuestName] = useState<string | null>(null);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   useEffect(() => {
     fetch(`/api/review/${token}`)
@@ -92,6 +94,22 @@ export default function ReviewPage() {
           <p className="text-gray-500">This review link may have expired or been removed.</p>
         </div>
       </div>
+    );
+  }
+
+  // Password gate: if project has a review_password and not yet unlocked
+  if (project.review_password && !isUnlocked) {
+    return (
+      <ReviewPasswordGate
+        projectName={project.name}
+        onUnlock={async (pw: string) => {
+          if (pw === project.review_password) {
+            setIsUnlocked(true);
+            return true;
+          }
+          return false;
+        }}
+      />
     );
   }
 
