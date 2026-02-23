@@ -1,9 +1,13 @@
 'use client';
 import { useState } from 'react';
 
-export default function ShareModal({ project, onClose }) {
+export default function ShareModal({ project, onClose, onSetPassword = null }) {
   const [copied, setCopied] = useState(false);
   const [msgCopied, setMsgCopied] = useState(false);
+  const [showPasswordPanel, setShowPasswordPanel] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSaved, setPasswordSaved] = useState(false);
 
   const reviewUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/review/${project.reviewToken || project.review_token}`
@@ -16,9 +20,7 @@ export default function ShareModal({ project, onClose }) {
       await navigator.clipboard.writeText(reviewUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // fallback: select the input
-    }
+    } catch {}
   };
 
   const copyMessage = async () => {
@@ -39,6 +41,20 @@ export default function ShareModal({ project, onClose }) {
     } else {
       copyLink();
     }
+  };
+
+  const handleSavePassword = async () => {
+    setPasswordSaving(true);
+    try {
+      await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_password: password || null }),
+      });
+      setPasswordSaved(true);
+      setTimeout(() => setPasswordSaved(false), 2000);
+    } catch {}
+    setPasswordSaving(false);
   };
 
   return (
@@ -87,8 +103,44 @@ export default function ShareModal({ project, onClose }) {
               )}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-1.5">✓ No account required for your client</p>
+          <div className="flex items-center justify-between mt-1.5">
+            <p className="text-xs text-gray-400">✓ No account required for your client</p>
+            <button
+              onClick={() => setShowPasswordPanel(!showPasswordPanel)}
+              className="text-xs text-gray-400 hover:text-orange-600 transition-colors"
+            >
+              {showPasswordPanel ? 'Hide' : '🔒 Add password'}
+            </button>
+          </div>
         </div>
+
+        {/* Password Panel */}
+        {showPasswordPanel && (
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-xs font-medium text-gray-700 mb-2">Optional Password Protection</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Set a password (or leave blank to remove)"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
+              />
+              <button
+                onClick={handleSavePassword}
+                disabled={passwordSaving}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  passwordSaved
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-orange-600 hover:bg-orange-500 text-white'
+                }`}
+              >
+                {passwordSaved ? '✓' : passwordSaving ? '...' : 'Save'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">Client will be prompted for this password before viewing</p>
+          </div>
+        )}
 
         {/* Pre-written message */}
         <div className="mb-5">
