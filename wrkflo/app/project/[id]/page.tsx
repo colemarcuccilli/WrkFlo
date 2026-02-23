@@ -12,6 +12,7 @@ import ShareModal from '@/components/ShareModal';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import VersionUpload from '@/components/VersionUpload';
 import FeedbackSummarizer from '@/components/FeedbackSummarizer';
+import RealtimeComments from '@/components/RealtimeComments';
 
 const statusColors: Record<string, string> = {
   'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
@@ -116,6 +117,26 @@ export default function ProjectPage() {
   const handleFileSelect = (file: any) => {
     setSelectedFileId(file.id);
   };
+
+  // Handle incoming realtime comments (from other users)
+  const handleRealtimeComment = useCallback((newComment: any) => {
+    setProject((prev: any) => {
+      if (!prev) return prev;
+      // Check if comment already exists (avoid duplicates from own POST)
+      const alreadyExists = prev.files.some((f: any) =>
+        (f.comments || []).some((c: any) => c.id === newComment.id)
+      );
+      if (alreadyExists) return prev;
+      return {
+        ...prev,
+        files: prev.files.map((f: any) =>
+          f.id === selectedFileId
+            ? { ...f, comments: [...(f.comments || []), newComment] }
+            : f
+        ),
+      };
+    });
+  }, [selectedFileId]);
 
   const handleVersionUploaded = useCallback((updatedFile: any) => {
     const normalized = normalizeFile(updatedFile);
@@ -410,6 +431,12 @@ export default function ProjectPage() {
       {showCelebration && project && (
         <CompletionCelebration project={project} onClose={() => setShowCelebration(false)} />
       )}
+      {/* Realtime comment listener */}
+      <RealtimeComments
+        fileId={selectedFileId}
+        onNewComment={handleRealtimeComment}
+      />
+
       {showVersionUpload && selectedFile && (
         <VersionUpload
           fileId={selectedFile.id}

@@ -10,6 +10,7 @@ import VersionHistory from '@/components/VersionHistory';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import MobileCommentSheet from '@/components/MobileCommentSheet';
 import GuestNameModal from '@/components/GuestNameModal';
+import RealtimeComments from '@/components/RealtimeComments';
 
 function normalizeFile(f: any) {
   return {
@@ -303,6 +304,28 @@ export default function ReviewPage() {
         onSubmit={handleAddComment}
         disabled={selectedFile?.status === 'locked'}
         fileType={selectedFile?.type}
+      />
+
+      {/* Realtime — listen for new comments from the creator side */}
+      <RealtimeComments
+        fileId={selectedFileId}
+        onNewComment={(newComment) => {
+          setProject((prev: any) => {
+            if (!prev) return prev;
+            const alreadyExists = prev.files.some((f: any) =>
+              (f.comments || []).some((c: any) => c.id === newComment.id)
+            );
+            if (alreadyExists) return prev;
+            return {
+              ...prev,
+              files: prev.files.map((f: any) =>
+                f.id === selectedFileId
+                  ? { ...f, comments: [...(f.comments || []), newComment] }
+                  : f
+              ),
+            };
+          });
+        }}
       />
 
       {/* Guest name modal — shown on first visit */}
