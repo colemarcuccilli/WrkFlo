@@ -7,6 +7,7 @@ import CommentFeed from '@/components/CommentFeed';
 import CommentInput from '@/components/CommentInput';
 import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
+import CompletionCelebration from '@/components/CompletionCelebration';
 
 function normalizeFile(f: any) {
   return {

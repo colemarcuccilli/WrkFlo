@@ -9,6 +9,7 @@ import CommentInput from '@/components/CommentInput';
 import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 import ShareModal from '@/components/ShareModal';
+import CompletionCelebration from '@/components/CompletionCelebration';
 
 const statusColors: Record<string, string> = {
   'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
@@ -57,6 +58,7 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
@@ -159,12 +161,21 @@ export default function ProjectPage() {
 
   const handleStatusChange = useCallback(async (newStatus: string) => {
     // Optimistic update
-    setProject((prev: any) => ({
-      ...prev,
-      files: prev.files.map((f: any) =>
-        f.id === selectedFileId ? { ...f, status: newStatus } : f
-      ),
-    }));
+    setProject((prev: any) => {
+      const updated = {
+        ...prev,
+        files: prev.files.map((f: any) =>
+          f.id === selectedFileId ? { ...f, status: newStatus } : f
+        ),
+      };
+      const allDone = updated.files.every(
+        (f: any) => f.status === 'approved' || f.status === 'locked'
+      );
+      if (allDone && updated.files.length > 0) {
+        setTimeout(() => setShowCelebration(true), 400);
+      }
+      return updated;
+    });
     // Persist to DB
     try {
       await fetch(`/api/files/${selectedFileId}/status`, {
@@ -326,6 +337,113 @@ export default function ProjectPage() {
       {/* Share Modal */}
       {showShare && project && (
         <ShareModal project={project} onClose={() => setShowShare(false)} />
+      )}
+      {showCelebration && project && (
+        <CompletionCelebration project={project} onClose={() => setShowCelebration(false)} />
+      )}
+
+      {/* Project Completion Summary Modal */}
+      {showSummary && project && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <style>{`
+            @keyframes confetti-fall {
+              0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
+            }
+            .confetti-dot {
+              position: absolute;
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              animation: confetti-fall 3s ease-out infinite;
+            }
+          `}</style>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative overflow-hidden">
+            {/* Confetti dots */}
+            <div className="confetti-dot" style={{ left: '10%', background: '#f97316', animationDelay: '0s' }} />
+            <div className="confetti-dot" style={{ left: '20%', background: '#eab308', animationDelay: '0.5s' }} />
+            <div className="confetti-dot" style={{ left: '30%', background: '#22c55e', animationDelay: '1s' }} />
+            <div className="confetti-dot" style={{ left: '40%', background: '#f43f5e', animationDelay: '1.5s' }} />
+            <div className="confetti-dot" style={{ left: '50%', background: '#8b5cf6', animationDelay: '0.3s' }} />
+            <div className="confetti-dot" style={{ left: '60%', background: '#06b6d4', animationDelay: '0.8s' }} />
+            <div className="confetti-dot" style={{ left: '70%', background: '#f97316', animationDelay: '1.2s' }} />
+            <div className="confetti-dot" style={{ left: '80%', background: '#eab308', animationDelay: '1.7s' }} />
+            <div className="confetti-dot" style={{ left: '90%', background: '#22c55e', animationDelay: '0.2s' }} />
+            
+            {/* Close button */}
+            <button
+              onClick={() => setShowSummary(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Content */}
+            <div className="text-center relative z-10">
+              {/* WrkFlo Logo */}
+              <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+
+              {/* Heading */}
+              <h2 className="text-2xl font-bold text-emerald-600 mb-2">✅ Project Complete</h2>
+              
+              {/* Project name */}
+              <h3 className="text-xl font-bold text-gray-900 mb-1">{project.name}</h3>
+              
+              {/* Client */}
+              <p className="text-sm text-gray-500 mb-4">{project.client}</p>
+              
+              {/* Stats */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-center gap-6">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{approvedCount}/{project.files.length}</p>
+                    <p className="text-xs text-gray-500">files approved</p>
+                  </div>
+                  <div className="w-px h-10 bg-gray-200" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-xs text-gray-500">completion date</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quote */}
+              <p className="text-gray-600 italic mb-6">"Another great project, delivered."</p>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const shareText = `Project ${project.name} has been approved by ${project.client}! ✅`;
+                    if (navigator.share) {
+                      navigator.share({ title: 'Project Complete', text: shareText }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(shareText);
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  Share Summary
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="flex-1 flex items-center justify-center px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
