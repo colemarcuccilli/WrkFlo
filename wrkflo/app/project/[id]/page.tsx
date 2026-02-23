@@ -266,8 +266,37 @@ export default function ProjectPage() {
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+          <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             <span className="text-xs text-gray-500 hidden md:block">{project.client}</span>
+            {!isProjectComplete && approvedCount < project.files.length && (
+              <button
+                onClick={async () => {
+                  const unapproved = project.files.filter(
+                    (f: any) => f.status !== 'approved' && f.status !== 'locked'
+                  );
+                  for (const f of unapproved) {
+                    setProject((prev: any) => ({
+                      ...prev,
+                      files: prev.files.map((pf: any) =>
+                        pf.id === f.id ? { ...pf, status: 'approved' } : pf
+                      ),
+                    }));
+                    await fetch(`/api/files/${f.id}/status`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: 'approved' }),
+                    }).catch(() => {});
+                  }
+                  setTimeout(() => setShowCelebration(true), 400);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Approve All
+              </button>
+            )}
             <button
               onClick={() => setShowShare(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-medium transition-colors"

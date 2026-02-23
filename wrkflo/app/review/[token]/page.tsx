@@ -9,6 +9,7 @@ import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import MobileCommentSheet from '@/components/MobileCommentSheet';
+import GuestNameModal from '@/components/GuestNameModal';
 
 function normalizeFile(f: any) {
   return {
@@ -50,6 +51,7 @@ export default function ReviewPage() {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [allApproved, setAllApproved] = useState(false);
   const [showMobileComment, setShowMobileComment] = useState(false);
+  const [guestName, setGuestName] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/review/${token}`)
@@ -105,9 +107,10 @@ export default function ReviewPage() {
   };
 
   const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
+    const displayName = guestName || 'Client';
     const newComment = {
       id: `c-client-${Date.now()}`,
-      author: 'You (Client)',
+      author: displayName,
       authorRole: 'client',
       content: text,
       timestamp: timestamp,
@@ -129,7 +132,7 @@ export default function ReviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           file_id: selectedFileId,
-          author_name: 'Client',
+          author_name: displayName,
           author_role: 'client',
           content: text,
           timestamp_data: timestamp,
@@ -138,7 +141,7 @@ export default function ReviewPage() {
     } catch (e) {
       console.error('Failed to save comment:', e);
     }
-  }, [selectedFileId]);
+  }, [selectedFileId, guestName]);
 
   const handleStatusChange = useCallback(async (newStatus: string) => {
     // Optimistic update
@@ -301,6 +304,14 @@ export default function ReviewPage() {
         disabled={selectedFile?.status === 'locked'}
         fileType={selectedFile?.type}
       />
+
+      {/* Guest name modal — shown on first visit */}
+      {guestName === null && (
+        <GuestNameModal
+          projectName={project.name}
+          onNameSet={(name) => setGuestName(name)}
+        />
+      )}
     </div>
   );
 }
