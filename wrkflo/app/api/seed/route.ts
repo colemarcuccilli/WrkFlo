@@ -84,26 +84,14 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
 
   try {
-    // 1. Upsert demo user
-    const { error: userError } = await supabase
-      .from('users')
-      .upsert({
-        id: DEMO_USER_ID,
-        email: 'demo@wrkflo.app',
-        name: 'Sarah Chen',
-        role: 'creator',
-      }, { onConflict: 'id' })
+    // 1. Skip user upsert — users table requires auth.users FK
+    // Demo seed runs without a real auth user, creator_id will be null
 
-    if (userError) {
-      console.error('User upsert error:', userError)
-      return NextResponse.json({ error: userError.message }, { status: 500 })
-    }
-
-    // 2. Delete existing demo projects and related data
+    // 2. Delete existing demo projects and related data (those with null creator or demo name)
     const { data: existingProjects } = await supabase
       .from('projects')
       .select('id')
-      .eq('creator_id', DEMO_USER_ID)
+      .in('name', ['Brand Identity Package', 'Summer Campaign Videos', 'The Deep Cut Podcast', 'Social Media Pack', 'Website Redesign', 'Album Art & Singles'])
 
     if (existingProjects && existingProjects.length > 0) {
       const projectIds = existingProjects.map(p => p.id)
@@ -135,7 +123,7 @@ export async function POST(req: NextRequest) {
         .from('projects')
         .insert({
           name: projectData.name,
-          creator_id: DEMO_USER_ID,
+          creator_id: null,
           status: projectData.status,
           client_name: projectData.client_name,
         })
@@ -186,7 +174,7 @@ export async function POST(req: NextRequest) {
             const commentTemplate = COMMENTS[Math.floor(Math.random() * COMMENTS.length)]
             await supabase.from('comments').insert({
               file_id: file.id,
-              author_id: i === 0 ? DEMO_USER_ID : null,
+              author_id: null,
               author_name: commentTemplate.author_name,
               author_role: commentTemplate.author_role,
               content: commentTemplate.content,
@@ -199,7 +187,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ 
       message: 'Seed completed successfully',
-      userId: DEMO_USER_ID,
       projectsCreated: DEMO_PROJECTS.length,
     }, { status: 201 })
 
