@@ -33,31 +33,31 @@ const fileTypeIcon = (type) => {
 };
 
 const statusDotClass = {
-  'draft': 'bg-slate-500',
-  'in-review': 'bg-blue-400',
-  'changes-requested': 'bg-orange-400',
-  'approved': 'bg-green-400',
-  'locked': 'bg-purple-400',
+  'draft': 'bg-gray-400',
+  'in-review': 'bg-orange-500',
+  'changes-requested': 'bg-red-500',
+  'approved': 'bg-emerald-500',
+  'locked': 'bg-purple-500',
 };
 
 export default function FileBrowser({ files, selectedFileId, onSelectFile }) {
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-slate-700">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Files</h2>
+    <div className="flex flex-col h-full bg-white">
+      <div className="px-4 py-3 border-b border-gray-100">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Files</h2>
       </div>
       <div className="flex-1 overflow-y-auto">
         {files.map((file) => {
           const isSelected = file.id === selectedFileId;
-          const colorClass = fileStatusColors[file.status] || 'text-slate-400';
-          const dotClass = statusDotClass[file.status] || 'bg-slate-500';
+          const colorClass = fileStatusColors[file.status] || 'text-gray-500';
+          const dotClass = statusDotClass[file.status] || 'bg-gray-400';
 
           return (
             <button
               key={file.id}
               onClick={() => onSelectFile(file)}
-              className={`w-full text-left px-4 py-3 border-b border-slate-700/50 transition-colors duration-150 hover:bg-slate-700/50 ${
-                isSelected ? 'bg-indigo-500/10 border-l-2 border-l-indigo-500' : ''
+              className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50 ${
+                isSelected ? 'bg-orange-50 border-l-2 border-l-orange-500' : ''
               }`}
             >
               <div className="flex items-start gap-3">
@@ -69,14 +69,14 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile }) {
                 {/* File info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-sm font-medium truncate ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                    <span className={`text-sm font-medium truncate ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
                       {file.name}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {/* Version badge */}
-                    <span className="px-1.5 py-0.5 bg-slate-700 text-slate-300 text-xs rounded font-mono">
+                    <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded font-mono">
                       {file.version}
                     </span>
 
@@ -87,12 +87,12 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile }) {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-500 mt-1">{file.uploadDate}</p>
+                  <p className="text-xs text-gray-400 mt-1">{file.uploadDate}</p>
                 </div>
 
                 {/* Lock icon for locked files */}
                 {file.status === 'locked' && (
-                  <div className="flex-shrink-0 text-purple-400 mt-0.5">
+                  <div className="flex-shrink-0 text-purple-500 mt-0.5">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>

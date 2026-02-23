@@ -16,7 +16,7 @@ export const projects = [
         version: 'V3',
         status: 'in-review',
         uploadDate: '2026-02-20',
-        url: 'https://placehold.co/800x600/1e293b/6366f1?text=Logo+Primary+SVG',
+        url: 'https://placehold.co/800x600/f97316/ffffff?text=Logo+Primary+SVG',
         versions: [
           { version: 'V1', date: '2026-02-10', notes: 'Initial concept — bold wordmark' },
           { version: 'V2', date: '2026-02-15', notes: 'Client requested warmer tones and icon mark' },
@@ -52,7 +52,7 @@ export const projects = [
         version: 'Final',
         status: 'changes-requested',
         uploadDate: '2026-02-21',
-        url: 'https://placehold.co/800x500/1e293b/6366f1?text=Business+Card+Mockup',
+        url: 'https://placehold.co/800x500/f97316/ffffff?text=Business+Card+Mockup',
         versions: [
           { version: 'V1', date: '2026-02-14', notes: 'Horizontal layout, white background' },
           { version: 'V2', date: '2026-02-18', notes: 'Dark version added, rounded corners' },
@@ -82,7 +82,7 @@ export const projects = [
         version: 'V2',
         status: 'changes-requested',
         uploadDate: '2026-02-19',
-        url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+        url: '/api/placeholder/video',
         duration: 120,
         versions: [
           { version: 'V1', date: '2026-02-10', notes: 'Rough cut — full 2-minute hero spot' },
@@ -103,7 +103,7 @@ export const projects = [
         version: 'V1',
         status: 'in-review',
         uploadDate: '2026-02-21',
-        url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+        url: '/api/placeholder/video',
         duration: 15,
         versions: [
           { version: 'V1', date: '2026-02-21', notes: '15-second social cut for Instagram/TikTok' },
@@ -120,7 +120,7 @@ export const projects = [
         version: 'V1',
         status: 'draft',
         uploadDate: '2026-02-22',
-        url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+        url: '/api/placeholder/video',
         duration: 30,
         versions: [
           { version: 'V1', date: '2026-02-22', notes: 'Vertical 9:16 story format — draft' },
@@ -146,7 +146,7 @@ export const projects = [
         version: 'V1',
         status: 'in-review',
         uploadDate: '2026-02-18',
-        url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
+        url: '/api/placeholder/audio',
         duration: 3600,
         versions: [
           { version: 'V1', date: '2026-02-18', notes: 'Raw recorded session — no processing' },
@@ -164,7 +164,7 @@ export const projects = [
         version: 'V2',
         status: 'approved',
         uploadDate: '2026-02-20',
-        url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
+        url: '/api/placeholder/audio',
         duration: 3580,
         versions: [
           { version: 'V1', date: '2026-02-19', notes: 'Initial mix — EQ and compression applied' },
@@ -183,7 +183,7 @@ export const projects = [
         version: 'Final',
         status: 'locked',
         uploadDate: '2026-02-05',
-        url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
+        url: '/api/placeholder/audio',
         duration: 30,
         versions: [
           { version: 'Final', date: '2026-02-05', notes: 'Final approved intro jingle — do not modify' },
@@ -211,7 +211,7 @@ export const projects = [
         version: 'Final',
         status: 'approved',
         uploadDate: '2026-02-15',
-        url: 'https://placehold.co/1080x1080/1e293b/6366f1?text=Instagram+Post+Final',
+        url: 'https://placehold.co/1080x1080/f97316/ffffff?text=Instagram+Post+Final',
         versions: [
           { version: 'V1', date: '2026-02-01', notes: 'Initial layout concepts (3 options)' },
           { version: 'V2', date: '2026-02-08', notes: 'Option B selected, refined typography' },
@@ -229,7 +229,7 @@ export const projects = [
         version: 'Final',
         status: 'approved',
         uploadDate: '2026-02-15',
-        url: 'https://placehold.co/1080x1920/1e293b/a78bfa?text=Story+Template',
+        url: 'https://placehold.co/1080x1920/f97316/ffffff?text=Story+Template',
         versions: [
           { version: 'Final', date: '2026-02-15', notes: 'Story template — editable Figma version delivered' },
         ],
@@ -244,7 +244,7 @@ export const projects = [
         version: 'Final',
         status: 'approved',
         uploadDate: '2026-02-15',
-        url: 'https://placehold.co/1200x628/1e293b/6366f1?text=Banner+Ad+1200x628',
+        url: 'https://placehold.co/1200x628/f97316/ffffff?text=Banner+Ad+1200x628',
         versions: [
           { version: 'Final', date: '2026-02-15', notes: '1200x628 Facebook/Instagram ad banner' },
         ],
@@ -284,7 +284,7 @@ export const projects = [
         version: 'V1',
         status: 'draft',
         uploadDate: '2026-02-22',
-        url: 'https://placehold.co/1440x900/0f172a/6366f1?text=Homepage+Design+V1',
+        url: 'https://placehold.co/1440x900/f97316/ffffff?text=Homepage+Design+V1',
         versions: [
           { version: 'V1', date: '2026-02-22', notes: 'Hero section and above-fold design' },
         ],
@@ -297,7 +297,7 @@ export const projects = [
         version: 'V1',
         status: 'draft',
         uploadDate: '2026-02-22',
-        url: 'https://placehold.co/390x844/0f172a/6366f1?text=Mobile+Design+V1',
+        url: 'https://placehold.co/390x844/f97316/ffffff?text=Mobile+Design+V1',
         versions: [
           { version: 'V1', date: '2026-02-22', notes: 'Mobile responsive breakpoints — 390px' },
         ],
@@ -322,7 +322,7 @@ export const projects = [
         version: 'V2',
         status: 'in-review',
         uploadDate: '2026-02-21',
-        url: 'https://placehold.co/3000x3000/0f172a/a78bfa?text=Album+Cover+V2',
+        url: 'https://placehold.co/3000x3000/f97316/ffffff?text=Album+Cover+V2',
         versions: [
           { version: 'V1', date: '2026-02-14', notes: 'Dark surrealist concept — initial direction' },
           { version: 'V2', date: '2026-02-21', notes: 'Typography layered in, texture pass, final color grade' },
@@ -340,7 +340,7 @@ export const projects = [
         version: 'V3',
         status: 'approved',
         uploadDate: '2026-02-20',
-        url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
+        url: '/api/placeholder/audio',
         duration: 213,
         versions: [
           { version: 'V1', date: '2026-02-13', notes: 'Demo recording — rough arrangement' },
@@ -360,7 +360,7 @@ export const projects = [
         version: 'V2',
         status: 'changes-requested',
         uploadDate: '2026-02-22',
-        url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
+        url: '/api/placeholder/audio',
         duration: 195,
         versions: [
           { version: 'V1', date: '2026-02-18', notes: 'Demo — piano and vocals only' },

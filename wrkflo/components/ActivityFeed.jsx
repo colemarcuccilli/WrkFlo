@@ -1,11 +1,11 @@
 'use client';
 
 const activityItems = [
-  { id: 1, type: 'comment', user: 'James Taylor', action: 'commented on', target: 'logo_primary.svg', time: '2 hours ago', color: 'text-orange-400' },
-  { id: 2, type: 'approve', user: 'Dana Lee', action: 'approved', target: 'instagram_post.png', time: '3 hours ago', color: 'text-green-400' },
-  { id: 3, type: 'upload', user: 'Sarah Chen', action: 'uploaded', target: 'business_card_mockup.png (Final)', time: '5 hours ago', color: 'text-indigo-400' },
-  { id: 4, type: 'changes', user: 'Alex Kim', action: 'requested changes on', target: 'hero_video.mp4', time: '6 hours ago', color: 'text-orange-400' },
-  { id: 5, type: 'comment', user: 'Zara Moon', action: 'commented on', target: 'album_cover.png', time: '8 hours ago', color: 'text-orange-400' },
+  { id: 1, type: 'comment', user: 'James Taylor', action: 'commented on', target: 'logo_primary.svg', time: '2 hours ago', color: 'text-orange-500' },
+  { id: 2, type: 'approve', user: 'Dana Lee', action: 'approved', target: 'instagram_post.png', time: '3 hours ago', color: 'text-emerald-500' },
+  { id: 3, type: 'upload', user: 'Sarah Chen', action: 'uploaded', target: 'business_card_mockup.png (Final)', time: '5 hours ago', color: 'text-orange-400' },
+  { id: 4, type: 'changes', user: 'Alex Kim', action: 'requested changes on', target: 'hero_video.mp4', time: '6 hours ago', color: 'text-orange-500' },
+  { id: 5, type: 'comment', user: 'Zara Moon', action: 'commented on', target: 'album_cover.png', time: '8 hours ago', color: 'text-orange-500' },
 ];
 
 const typeIcon = (type) => {
@@ -41,8 +41,8 @@ const typeIcon = (type) => {
 
 export default function ActivityFeed() {
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
-      <h3 className="text-sm font-semibold text-white mb-4">Recent Activity</h3>
+    <div className="bg-white border border-gray-200 rounded-xl p-5">
+      <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Activity</h3>
       <div className="space-y-3">
         {activityItems.map((item) => (
           <div key={item.id} className="flex items-start gap-3">
@@ -50,12 +50,12 @@ export default function ActivityFeed() {
               {typeIcon(item.type)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-300">
-                <span className="font-medium text-white">{item.user}</span>
+              <p className="text-sm text-gray-700">
+                <span className="font-medium text-gray-900">{item.user}</span>
                 {' '}{item.action}{' '}
-                <span className="text-indigo-400">{item.target}</span>
+                <span className="text-orange-500">{item.target}</span>
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">{item.time}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
             </div>
           </div>
         ))}
