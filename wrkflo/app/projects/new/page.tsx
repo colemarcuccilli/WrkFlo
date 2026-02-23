@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function NewProjectPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', client_name: '', status: 'Draft' });
+  const [form, setForm] = useState({ name: '', client_name: '', status: 'Draft', description: '', due_date: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -123,6 +123,29 @@ export default function NewProjectPage() {
                 <option value="In Review">In Review</option>
                 <option value="Approved">Approved</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-gray-400">(optional)</span></label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                placeholder="Brief overview of deliverables, scope, or notes..."
+                rows={3}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 resize-none"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Due Date <span className="text-gray-400">(optional)</span></label>
+              <input
+                type="date"
+                value={form.due_date}
+                onChange={(e) => setForm((p) => ({ ...p, due_date: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                disabled={loading}
+              />
             </div>
 
             <div className="flex gap-3 pt-2">
