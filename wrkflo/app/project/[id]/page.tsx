@@ -11,6 +11,7 @@ import VersionHistory from '@/components/VersionHistory';
 import ShareModal from '@/components/ShareModal';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import VersionUpload from '@/components/VersionUpload';
+import FeedbackSummarizer from '@/components/FeedbackSummarizer';
 
 const statusColors: Record<string, string> = {
   'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
@@ -351,6 +352,7 @@ export default function ProjectPage() {
                 file={selectedFile}
                 onStatusChange={handleStatusChange}
               />
+              <FeedbackSummarizer project={project} />
             </div>
           )}
 
