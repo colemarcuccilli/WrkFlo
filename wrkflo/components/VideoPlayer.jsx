@@ -29,6 +29,45 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     }
   }, [onSeekToComment]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e) => {
+      // Only handle if not typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      switch (e.key) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowLeft':
+        case 'j':
+          e.preventDefault();
+          if (videoRef.current) {
+            videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 5);
+            setCurrentTime(videoRef.current.currentTime);
+          }
+          break;
+        case 'ArrowRight':
+        case 'l':
+          e.preventDefault();
+          if (videoRef.current) {
+            videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 5);
+            setCurrentTime(videoRef.current.currentTime);
+          }
+          break;
+        case 'm':
+          toggleMute();
+          break;
+        case 'f':
+          if (videoRef.current) videoRef.current.requestFullscreen?.();
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [duration, isPlaying]);
+
   const handleTimeUpdate = () => {
     if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
   };
@@ -163,6 +202,16 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
           </button>
           <input type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume} onChange={handleVolumeChange} className="w-20 h-1 accent-orange-500" />
           <span className="text-xs text-gray-500 ml-auto">{formatTime(currentTime)} / {formatTime(duration)}</span>
+          <button
+            onClick={() => videoRef.current?.requestFullscreen?.()}
+            title="Fullscreen (F)"
+            className="ml-1 text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          </button>
+          <span className="ml-1 hidden sm:inline text-xs text-gray-400" title="Space=play, ←→=seek 5s, M=mute, F=fullscreen">⌨</span>
         </div>
       </div>
 

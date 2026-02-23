@@ -8,6 +8,7 @@ import CommentInput from '@/components/CommentInput';
 import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 import CompletionCelebration from '@/components/CompletionCelebration';
+import MobileCommentSheet from '@/components/MobileCommentSheet';
 
 function normalizeFile(f: any) {
   return {
@@ -48,6 +49,7 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [allApproved, setAllApproved] = useState(false);
+  const [showMobileComment, setShowMobileComment] = useState(false);
 
   useEffect(() => {
     fetch(`/api/review/${token}`)
@@ -281,6 +283,24 @@ export default function ReviewPage() {
           </div>
         </div>
       </div>
+      {/* Mobile floating comment button */}
+      <button
+        onClick={() => setShowMobileComment(true)}
+        className="fixed bottom-6 right-6 z-30 md:hidden flex items-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white text-sm font-semibold rounded-full shadow-lg shadow-orange-600/30 transition-all active:scale-95"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+        Comment
+      </button>
+
+      <MobileCommentSheet
+        isOpen={showMobileComment}
+        onClose={() => setShowMobileComment(false)}
+        onSubmit={handleAddComment}
+        disabled={selectedFile?.status === 'locked'}
+        fileType={selectedFile?.type}
+      />
     </div>
   );
 }
