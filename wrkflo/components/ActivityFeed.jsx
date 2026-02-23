@@ -39,12 +39,14 @@ const typeIcon = (type) => {
   }
 };
 
-export default function ActivityFeed() {
+export default function ActivityFeed({ activities: propActivities = null }) {
+  const activities = propActivities || activityItems;
+  
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5">
       <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Activity</h3>
       <div className="space-y-3">
-        {activityItems.map((item) => (
+        {activities.map((item) => (
           <div key={item.id} className="flex items-start gap-3">
             <div className={`mt-0.5 flex-shrink-0 ${item.color}`}>
               {typeIcon(item.type)}

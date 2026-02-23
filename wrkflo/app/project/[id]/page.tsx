@@ -57,6 +57,7 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     fetch(`/api/projects/${projectId}`)
@@ -103,9 +104,22 @@ export default function ProjectPage() {
     (f: any) => f.status === 'approved' || f.status === 'locked'
   ).length;
 
+  const isProjectComplete = project.files.length > 0 && project.files.every(
+    (f: any) => f.status === 'approved' || f.status === 'locked'
+  );
+
   const handleFileSelect = (file: any) => {
     setSelectedFileId(file.id);
   };
+
+  const handleUploadComplete = useCallback((newFile: any) => {
+    const normalized = normalizeFile(newFile);
+    setProject((prev: any) => ({
+      ...prev,
+      files: [...prev.files, normalized],
+    }));
+    setSelectedFileId(normalized.id);
+  }, []);
 
   const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
     const newComment = {
@@ -228,6 +242,22 @@ export default function ProjectPage() {
         </div>
       </header>
 
+      {/* Completion Banner */}
+      {isProjectComplete && (
+        <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-emerald-50 border-b border-amber-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
+            <span className="text-lg">🎉</span>
+            <span className="text-sm font-medium text-gray-900">All files approved! Your project is complete.</span>
+            <button
+              onClick={() => setShowSummary(true)}
+              className="ml-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+            >
+              View Summary
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 3-panel layout */}
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
         <div className="w-60 flex-shrink-0 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
@@ -235,6 +265,8 @@ export default function ProjectPage() {
             files={project.files}
             selectedFileId={selectedFileId}
             onSelectFile={handleFileSelect}
+            projectId={projectId}
+            onUploadComplete={handleUploadComplete}
           />
         </div>
 

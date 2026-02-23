@@ -124,7 +124,9 @@ export default function WaveformPlayer({ file, comments, onAddComment, onSeekToC
             </span>
           )}
         </div>
-        <div ref={waveContainerRef} className="w-full rounded overflow-hidden" style={{ minHeight: 80 }} />
+        {!loadError && (
+          <div ref={waveContainerRef} className="w-full rounded overflow-hidden" style={{ minHeight: 80 }} />
+        )}
         {!isLoaded && (
           <div className="flex items-center justify-center h-20 text-gray-400 text-sm">
             <span className="animate-pulse">Loading waveform...</span>

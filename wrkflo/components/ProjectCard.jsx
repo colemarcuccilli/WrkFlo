@@ -1,17 +1,28 @@
 'use client';
 import Link from 'next/link';
-import { statusColors } from '@/lib/mock-data';
+
+const statusColors = {
+  'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
+  'Approved': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  'Changes Requested': 'bg-red-50 text-red-700 border border-red-200',
+  'Draft': 'bg-gray-50 text-gray-600 border border-gray-200',
+  'Locked': 'bg-purple-50 text-purple-700 border border-purple-200',
+};
 
 function getApprovedCount(files) {
-  return files.filter((f) => f.status === 'approved' || f.status === 'locked').length;
+  return (files || []).filter((f) => f.status === 'approved' || f.status === 'locked').length;
 }
 
 export default function ProjectCard({ project }) {
-  const approved = getApprovedCount(project.files);
-  const total = project.files.length;
+  const files = project.files || [];
+  const approved = getApprovedCount(files);
+  const total = files.length;
   const progressPct = total > 0 ? (approved / total) * 100 : 0;
 
   const badgeClass = statusColors[project.status] || statusColors['Draft'];
+  const creatorName = project.creatorName || project.creator_name || 'Creator';
+  const client = project.client_name || project.client || 'Unknown Client';
+  const lastActivity = project.lastActivity || (project.updated_at ? new Date(project.updated_at).toLocaleDateString() : 'Recently');
 
   return (
     <Link href={`/project/${project.id}`} className="block">
@@ -22,11 +33,16 @@ export default function ProjectCard({ project }) {
             <h3 className="text-gray-900 font-semibold text-base truncate group-hover:text-orange-600 transition-colors">
               {project.name}
             </h3>
-            <p className="text-gray-500 text-sm mt-0.5 truncate">{project.client}</p>
+            <p className="text-gray-500 text-sm mt-0.5 truncate">{client}</p>
           </div>
           <span className={`ml-3 flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
             {project.status}
           </span>
+          {progressPct === 100 && (
+            <span className="ml-2 flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+              ✓ Complete
+            </span>
+          )}
         </div>
 
         {/* Stats row */}
@@ -41,7 +57,7 @@ export default function ProjectCard({ project }) {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {project.lastActivity}
+            {lastActivity}
           </span>
         </div>
 
@@ -67,9 +83,9 @@ export default function ProjectCard({ project }) {
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-700">
-              {project.creatorName.charAt(0)}
+              {creatorName.charAt(0)}
             </div>
-            <span className="text-xs text-gray-500">{project.creatorName}</span>
+            <span className="text-xs text-gray-500">{creatorName}</span>
           </div>
           <span className="text-xs text-orange-500 group-hover:text-orange-600 transition-colors">
             Open →
