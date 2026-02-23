@@ -1,11 +1,11 @@
 'use client';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-const activityItems = [
+const fallbackItems = [
   { id: 1, type: 'comment', user: 'James Taylor', action: 'commented on', target: 'logo_primary.svg', time: '2 hours ago', color: 'text-orange-500' },
   { id: 2, type: 'approve', user: 'Dana Lee', action: 'approved', target: 'instagram_post.png', time: '3 hours ago', color: 'text-emerald-500' },
-  { id: 3, type: 'upload', user: 'Sarah Chen', action: 'uploaded', target: 'business_card_mockup.png (Final)', time: '5 hours ago', color: 'text-orange-400' },
-  { id: 4, type: 'changes', user: 'Alex Kim', action: 'requested changes on', target: 'hero_video.mp4', time: '6 hours ago', color: 'text-orange-500' },
-  { id: 5, type: 'comment', user: 'Zara Moon', action: 'commented on', target: 'album_cover.png', time: '8 hours ago', color: 'text-orange-500' },
+  { id: 3, type: 'upload', user: 'Sarah Chen', action: 'uploaded', target: 'business_card_mockup.png', time: '5 hours ago', color: 'text-orange-400' },
 ];
 
 const typeIcon = (type) => {
@@ -40,13 +40,39 @@ const typeIcon = (type) => {
 };
 
 export default function ActivityFeed({ activities: propActivities = null }) {
-  const activities = propActivities || activityItems;
-  
+  const [activities, setActivities] = useState(propActivities || null);
+  const [loading, setLoading] = useState(!propActivities);
+
+  useEffect(() => {
+    if (propActivities) return;
+    fetch('/api/activity')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setActivities(data);
+        } else {
+          setActivities(fallbackItems);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setActivities(fallbackItems);
+        setLoading(false);
+      });
+  }, [propActivities]);
+
+  const displayItems = activities || fallbackItems;
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Activity</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+        {loading && (
+          <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+        )}
+      </div>
       <div className="space-y-3">
-        {activities.map((item) => (
+        {displayItems.map((item) => (
           <div key={item.id} className="flex items-start gap-3">
             <div className={`mt-0.5 flex-shrink-0 ${item.color}`}>
               {typeIcon(item.type)}
@@ -55,8 +81,17 @@ export default function ActivityFeed({ activities: propActivities = null }) {
               <p className="text-sm text-gray-700">
                 <span className="font-medium text-gray-900">{item.user}</span>
                 {' '}{item.action}{' '}
-                <span className="text-orange-500">{item.target}</span>
+                {item.projectId ? (
+                  <Link href={`/project/${item.projectId}`} className="text-orange-500 hover:text-orange-600 hover:underline">
+                    {item.target}
+                  </Link>
+                ) : (
+                  <span className="text-orange-500">{item.target}</span>
+                )}
               </p>
+              {item.projectName && (
+                <p className="text-xs text-gray-400 mt-0.5">{item.projectName}</p>
+              )}
               <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
             </div>
           </div>

@@ -150,7 +150,9 @@ export default function ReviewPage() {
       const allDone = updated.files.every(
         (f: any) => f.status === 'approved' || f.status === 'locked'
       );
-      if (allDone) setAllApproved(true);
+      if (allDone && updated.files.length > 0) {
+        setTimeout(() => setAllApproved(true), 400);
+      }
       return updated;
     });
     // Persist to DB
@@ -208,14 +210,7 @@ export default function ReviewPage() {
       </div>
 
       {allApproved && (
-        <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-sm text-emerald-700 font-medium">
-            🎉 All files approved! {project.creatorName} has been notified.
-          </p>
-        </div>
+        <CompletionCelebration project={project} onClose={() => setAllApproved(false)} />
       )}
 
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
