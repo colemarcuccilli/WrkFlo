@@ -79,38 +79,14 @@ export default function ProjectPage() {
       .catch(() => setLoading(false));
   }, [projectId]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading project...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 text-lg mb-4">Project not found</p>
-          <Link href="/dashboard" className="text-orange-500 hover:text-orange-600">
-            ← Back to Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const selectedFile = project.files.find((f: any) => f.id === selectedFileId) || project.files[0];
+  const selectedFile = project?.files?.find((f: any) => f.id === selectedFileId) || project?.files?.[0];
   const fileComments = selectedFile?.comments || [];
 
-  const approvedCount = project.files.filter(
+  const approvedCount = (project?.files || []).filter(
     (f: any) => f.status === 'approved' || f.status === 'locked'
   ).length;
 
-  const isProjectComplete = project.files.length > 0 && project.files.every(
+  const isProjectComplete = (project?.files?.length ?? 0) > 0 && (project?.files || []).every(
     (f: any) => f.status === 'approved' || f.status === 'locked'
   );
 
@@ -242,6 +218,30 @@ export default function ProjectPage() {
       (window as any).__wrkflo_seek(ts);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 text-lg mb-4">Project not found</p>
+          <Link href="/dashboard" className="text-orange-500 hover:text-orange-600">
+            ← Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const badgeClass = statusColors[project.status] || '';
 
