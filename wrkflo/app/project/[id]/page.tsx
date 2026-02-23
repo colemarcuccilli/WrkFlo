@@ -351,6 +351,7 @@ export default function ProjectPage() {
               <ApprovalBar
                 file={selectedFile}
                 onStatusChange={handleStatusChange}
+                clientName={project.client}
               />
               <FeedbackSummarizer project={project} />
             </div>

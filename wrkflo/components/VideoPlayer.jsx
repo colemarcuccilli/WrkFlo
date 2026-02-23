@@ -66,7 +66,7 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [duration, isPlaying]);
+  }, [duration, isPlaying, togglePlay, toggleMute]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
@@ -76,11 +76,11 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     if (videoRef.current) setDuration(videoRef.current.duration);
   };
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
     if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
 
   const handleProgressClick = useCallback((e) => {
     if (!progressRef.current) return;
@@ -99,12 +99,12 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     setIsMuted(v === 0);
   };
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (!videoRef.current) return;
     const newMuted = !isMuted;
     videoRef.current.muted = newMuted;
     setIsMuted(newMuted);
-  };
+  }, [isMuted]);
 
   const handleAddCommentAtTimestamp = (text) => {
     if (!text.trim()) return;

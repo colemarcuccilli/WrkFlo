@@ -16,7 +16,7 @@ const statusConfig = {
   'locked': { color: 'bg-purple-50 text-purple-600 border-purple-200', label: 'Locked', icon: '🔒' },
 };
 
-export default function ApprovalBar({ file, onStatusChange }) {
+export default function ApprovalBar({ file, onStatusChange, clientName = 'Client' }) {
   const config = statusConfig[file?.status] || statusConfig['draft'];
   const isLocked = file?.status === 'locked';
 
@@ -68,6 +68,22 @@ export default function ApprovalBar({ file, onStatusChange }) {
             {file?.status === 'changes-requested' ? 'Changes Requested' : 'Request Changes'}
           </button>
         </div>
+      )}
+
+      {/* Approval badge download (for approved files) */}
+      {(file?.status === 'approved' || file?.status === 'locked') && (
+        <a
+          href={`/api/badge?fileName=${encodeURIComponent(file?.name || 'File')}&clientName=${encodeURIComponent(clientName)}&date=${encodeURIComponent(new Date().toLocaleDateString())}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+          title="Download approval badge for portfolio use"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Approval Badge
+        </a>
       )}
 
       {/* Status workflow indicator */}
