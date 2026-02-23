@@ -10,6 +10,7 @@ import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 import ShareModal from '@/components/ShareModal';
 import CompletionCelebration from '@/components/CompletionCelebration';
+import VersionUpload from '@/components/VersionUpload';
 
 const statusColors: Record<string, string> = {
   'In Review': 'bg-orange-50 text-orange-700 border border-orange-200',
@@ -59,6 +60,7 @@ export default function ProjectPage() {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showVersionUpload, setShowVersionUpload] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
@@ -113,6 +115,14 @@ export default function ProjectPage() {
   const handleFileSelect = (file: any) => {
     setSelectedFileId(file.id);
   };
+
+  const handleVersionUploaded = useCallback((updatedFile: any) => {
+    const normalized = normalizeFile(updatedFile);
+    setProject((prev: any) => ({
+      ...prev,
+      files: prev.files.map((f: any) => f.id === normalized.id ? { ...f, ...normalized } : f),
+    }));
+  }, []);
 
   const handleUploadComplete = useCallback((newFile: any) => {
     const normalized = normalizeFile(newFile);
@@ -176,17 +186,34 @@ export default function ProjectPage() {
       }
       return updated;
     });
-    // Persist to DB
+    // Persist file status to DB
     try {
       await fetch(`/api/files/${selectedFileId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
+      // Also update project status if all approved
+      const currentProject = project;
+      if (currentProject) {
+        const updatedFiles = currentProject.files.map((f: any) =>
+          f.id === selectedFileId ? { ...f, status: newStatus } : f
+        );
+        const allDone = updatedFiles.every(
+          (f: any) => f.status === 'approved' || f.status === 'locked'
+        );
+        if (allDone && updatedFiles.length > 0) {
+          await fetch(`/api/projects/${projectId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Approved' }),
+          }).catch(() => {});
+        }
+      }
     } catch (e) {
       console.error('Failed to save status:', e);
     }
-  }, [selectedFileId]);
+  }, [selectedFileId, project, projectId]);
 
   const handleSeekToTimestamp = (ts: number) => {
     if (typeof window !== 'undefined' && (window as any).__wrkflo_seek) {
@@ -285,7 +312,17 @@ export default function ProjectPage() {
           {selectedFile && (
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 bg-white flex-shrink-0">
               <span className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</span>
-              <div className="ml-auto flex-shrink-0">
+              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setShowVersionUpload(true)}
+                  title="Upload new version"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-orange-50 hover:text-orange-600 border border-gray-200 rounded-lg transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  New Version
+                </button>
                 <VersionHistory file={selectedFile} />
               </div>
             </div>
@@ -340,6 +377,15 @@ export default function ProjectPage() {
       )}
       {showCelebration && project && (
         <CompletionCelebration project={project} onClose={() => setShowCelebration(false)} />
+      )}
+      {showVersionUpload && selectedFile && (
+        <VersionUpload
+          fileId={selectedFile.id}
+          fileName={selectedFile.name}
+          currentVersion={selectedFile.version || 'V1'}
+          onVersionUploaded={handleVersionUploaded}
+          onClose={() => setShowVersionUpload(false)}
+        />
       )}
 
       {/* Project Completion Summary Modal */}

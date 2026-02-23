@@ -5,6 +5,73 @@ import ImageViewer from './ImageViewer';
 const WaveformPlayer = dynamic(() => import('./WaveformPlayer'), { ssr: false });
 const VideoPlayer = dynamic(() => import('./VideoPlayer'), { ssr: false });
 
+const FILE_TYPE_CONFIG = {
+  vector: {
+    icon: (
+      <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+      </svg>
+    ),
+    label: 'Vector File',
+    description: 'SVG / AI / EPS — open in your design tool',
+  },
+  design: {
+    icon: (
+      <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+      </svg>
+    ),
+    label: 'Design File',
+    description: 'Figma / Sketch / PSD — open in your design tool',
+  },
+  archive: {
+    icon: (
+      <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+    ),
+    label: 'Archive',
+    description: 'ZIP / RAR — download and extract to view',
+  },
+  other: {
+    icon: (
+      <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+    ),
+    label: 'File',
+    description: 'Download to view on your device',
+  },
+};
+
+function GenericFileCard({ file }) {
+  const config = FILE_TYPE_CONFIG[file.type] || FILE_TYPE_CONFIG.other;
+  return (
+    <div className="flex flex-col items-center justify-center py-16 bg-gray-50 border border-gray-200 rounded-lg">
+      <div className="mb-4">{config.icon}</div>
+      <p className="text-gray-900 font-semibold text-base">{file.name}</p>
+      <p className="text-orange-500 text-sm font-medium mt-0.5">{config.label}</p>
+      <p className="text-gray-400 text-xs mt-2 text-center max-w-xs">{config.description}</p>
+      {file.url && (
+        <a
+          href={file.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download
+        </a>
+      )}
+      <div className="mt-4 text-xs text-gray-400">
+        Use the comment section to leave feedback
+      </div>
+    </div>
+  );
+}
+
 export default function FilePreview({ file, comments, onAddComment, onSeekToTimestamp }) {
   if (!file) {
     return (
@@ -23,7 +90,7 @@ export default function FilePreview({ file, comments, onAddComment, onSeekToTime
     <div className="h-full overflow-y-auto p-4">
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm font-medium text-gray-700 truncate">{file.name}</span>
-        <span className="text-xs text-gray-400 flex-shrink-0">{file.type}</span>
+        <span className="text-xs text-gray-400 flex-shrink-0 capitalize">{file.type}</span>
       </div>
 
       {file.type === 'video' && (
@@ -43,37 +110,34 @@ export default function FilePreview({ file, comments, onAddComment, onSeekToTime
           <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p className="text-gray-700 font-medium">{file.name}</p>
-          <p className="text-gray-400 text-sm mt-1">Document preview</p>
-          <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4 max-w-md w-full">
-            <div className="space-y-2">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-2 bg-gray-100 rounded" style={{ width: `${60 + (i * 7) % 35}%` }} />
+          <p className="text-gray-700 font-semibold">{file.name}</p>
+          <p className="text-orange-500 text-sm font-medium mt-0.5">PDF / Document</p>
+          <div className="mt-5 bg-white border border-gray-200 rounded-lg p-5 max-w-md w-full shadow-sm">
+            <div className="space-y-2.5">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-2 bg-gray-100 rounded" style={{ width: `${55 + (i * 13) % 40}%` }} />
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-4 text-center">PDF viewer coming soon</p>
+            <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+              <p className="text-xs text-amber-600 font-medium">⚡ PDF preview coming soon</p>
+              {file.url && (
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+                >
+                  Open →
+                </a>
+              )}
+            </div>
           </div>
+          <p className="text-xs text-gray-400 mt-3">Leave comments in the panel on the right</p>
         </div>
       )}
 
       {!['video', 'audio', 'image', 'document', 'pdf'].includes(file.type) && (
-        <div className="flex flex-col items-center justify-center py-16 bg-gray-50 border border-gray-200 rounded-lg">
-          <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <p className="text-gray-700 font-medium">{file.name}</p>
-          <p className="text-gray-400 text-sm mt-1 capitalize">{file.type} file</p>
-          {file.url && (
-            <a
-              href={file.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Download File
-            </a>
-          )}
-        </div>
+        <GenericFileCard file={file} />
       )}
     </div>
   );
