@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 
 const teamMembers = [
   {
@@ -164,8 +165,10 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function TeamPage() {
+  const { user } = useAuth();
   const [showInvite, setShowInvite] = useState(false);
   const [stats, setStats] = useState<any>(null);
+  const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
 
   useEffect(() => {
     fetch('/api/stats')
@@ -204,7 +207,7 @@ export default function TeamPage() {
               </button>
             </Link>
             <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-700">
-              S
+              {userInitial}
             </div>
           </div>
         </div>

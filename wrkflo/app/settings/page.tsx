@@ -1,6 +1,10 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
+import { createClient } from '@/lib/supabase/client';
+import GoogleDriveConnect from '@/components/GoogleDriveConnect';
 
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   return (
@@ -18,6 +22,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState({
     comments: true,
     approvals: true,
@@ -26,8 +31,8 @@ export default function SettingsPage() {
     weeklyDigest: true,
   });
   const [profile, setProfile] = useState({
-    name: 'Sarah Chen',
-    email: 'sarah@wrkflo.app',
+    name: '',
+    email: '',
     role: 'Creative Director',
     timezone: 'Eastern Time (ET)',
   });
@@ -41,6 +46,32 @@ export default function SettingsPage() {
   const [savingBranding, setSavingBranding] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  const searchParams = useSearchParams();
+  const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
+
+  // Show toast when redirected back from Google Drive OAuth
+  useEffect(() => {
+    const driveParam = searchParams.get('drive');
+    if (driveParam === 'connected') {
+      showToast('Google Drive connected successfully');
+    } else if (driveParam === 'error') {
+      showToast('Failed to connect Google Drive');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (user) {
+      setProfile((p) => ({
+        ...p,
+        name: user.user_metadata?.full_name || p.name || '',
+        email: user.email || p.email || '',
+      }));
+      if (user.user_metadata?.avatar_url) {
+        setPhotoPreview(user.user_metadata.avatar_url);
+      }
+    }
+  }, [user]);
+
   const toggle = (key: string) => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
   };
@@ -51,10 +82,16 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async () => {
     setSavingProfile(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 600));
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({
+      data: { full_name: profile.name },
+    });
     setSavingProfile(false);
-    showToast('Profile saved successfully');
+    if (error) {
+      showToast('Failed to save profile: ' + error.message);
+    } else {
+      showToast('Profile saved successfully');
+    }
   };
 
   const handleSaveBranding = async () => {
@@ -112,7 +149,7 @@ export default function SettingsPage() {
               {photoPreview ? (
                 <img src={photoPreview} alt="avatar" className="w-full h-full object-cover" />
               ) : (
-                'S'
+                userInitial
               )}
             </div>
           </div>
@@ -136,7 +173,7 @@ export default function SettingsPage() {
               {photoPreview ? (
                 <img src={photoPreview} alt="avatar" className="w-full h-full object-cover" />
               ) : (
-                'S'
+                userInitial
               )}
             </div>
             <div>
@@ -262,6 +299,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Integrations */}
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">Integrations</h2>
+          <GoogleDriveConnect />
+        </div>
+
         {/* Branding */}
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Workspace Branding</h2>
@@ -320,6 +363,22 @@ export default function SettingsPage() {
               )}
             </button>
           </div>
+        </div>
+
+        {/* Sign Out */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mt-6 shadow-sm">
+          <h2 className="text-base font-semibold text-gray-900 mb-2">Account</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Signed in as <span className="font-medium text-gray-700">{user?.email}</span>
+          </p>
+          <form action="/auth/signout" method="POST">
+            <button
+              type="submit"
+              className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
+            >
+              Sign Out
+            </button>
+          </form>
         </div>
       </main>
 

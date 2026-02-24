@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
         version: 'V1',
         status: 'in-review',
         url: fileUrl,
+        storage_type: 'local',
         upload_date: new Date().toISOString().split('T')[0],
       })
       .select()

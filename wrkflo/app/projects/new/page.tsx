@@ -2,12 +2,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: '', client_name: '', status: 'Draft', description: '', due_date: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +59,7 @@ export default function NewProjectPage() {
             <Link href="/settings" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
           </nav>
 
-          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-700">S</div>
+          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-700">{userInitial}</div>
         </div>
       </header>
 

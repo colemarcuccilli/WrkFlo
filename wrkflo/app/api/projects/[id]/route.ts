@@ -5,7 +5,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('projects')
-    .select(`*, files (id, name, type, version, status, url, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, created_at))`)
+    .select(`*, files (id, name, type, version, status, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, created_at))`)
     .eq('id', params.id)
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })

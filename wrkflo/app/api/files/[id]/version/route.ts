@@ -59,6 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         version: newVersionLabel,
         url: newUrl,
         status: 'in-review',
+        storage_type: 'local',
         upload_date: new Date().toISOString().split('T')[0],
       })
       .eq('id', params.id)

@@ -1,0 +1,23 @@
+import { type NextRequest } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
+
+export async function middleware(request: NextRequest) {
+  return await updateSession(request)
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico (browser icon)
+     * - /api/* (API routes use their own auth)
+     * - /review/* (guest review links, no auth needed)
+     * - /login (login page itself)
+     * - /auth/* (auth callback routes)
+     * - static assets (.svg, .png, .jpg, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api/|review/|login|auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
+}

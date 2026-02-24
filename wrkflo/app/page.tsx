@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 
 // ── Icons (inline SVGs, no external deps) ────────────────────────────────────
 
@@ -95,6 +96,7 @@ function HeartIcon({ className }: { className?: string }) {
 // ── Main Landing Page ─────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -142,18 +144,34 @@ export default function LandingPage() {
             <a href="#waitlist" className="hover:text-orange-600 transition-colors">Early Access</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-orange-400 hover:text-orange-600 transition-colors"
-            >
-              Dashboard
-            </Link>
-            <a
-              href="#waitlist"
-              className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-500 transition-colors"
-            >
-              Get Early Access
-            </a>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-orange-400 hover:text-orange-600 transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700">
+                  {user.user_metadata?.full_name?.[0] || user.email?.[0]?.toUpperCase() || '?'}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-orange-400 hover:text-orange-600 transition-colors"
+                >
+                  Login
+                </Link>
+                <a
+                  href="#waitlist"
+                  className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-500 transition-colors"
+                >
+                  Get Early Access
+                </a>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -480,7 +498,7 @@ export default function LandingPage() {
             </div>
 
             <nav className="flex flex-wrap justify-center gap-5 text-sm text-gray-500 sm:justify-end">
-              <Link href="/dashboard" className="hover:text-orange-600 transition-colors">Dashboard</Link>
+              <Link href={user ? "/dashboard" : "/login"} className="hover:text-orange-600 transition-colors">{user ? 'Dashboard' : 'Login'}</Link>
               <a href="#features" className="hover:text-orange-600 transition-colors">Features</a>
               <a href="#" className="hover:text-orange-600 transition-colors">Privacy</a>
               <a href="#" className="hover:text-orange-600 transition-colors">Terms</a>

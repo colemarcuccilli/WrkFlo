@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProjectCard from '@/components/ProjectCard';
 import ActivityFeed from '@/components/ActivityFeed';
+import { useAuth } from '@/components/AuthProvider';
 
 function normalizeProject(p: any) {
   return {
@@ -18,11 +19,14 @@ function normalizeProject(p: any) {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
 
   useEffect(() => {
     fetch('/api/projects')
@@ -90,7 +94,7 @@ export default function DashboardPage() {
               </button>
             </Link>
             <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-700">
-              S
+              {userInitial}
             </div>
           </div>
         </div>

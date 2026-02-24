@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 import FileBrowser from '@/components/FileBrowser';
 import FilePreview from '@/components/FilePreview';
 import CommentFeed from '@/components/CommentFeed';
@@ -54,8 +55,10 @@ function normalizeProject(p: any) {
 }
 
 export default function ProjectPage() {
+  const { user } = useAuth();
   const params = useParams();
   const projectId = params.id as string;
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'You';
 
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -134,7 +137,7 @@ export default function ProjectPage() {
   const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
     const newComment = {
       id: `c-new-${Date.now()}`,
-      author: 'You',
+      author: userName,
       authorRole: 'creator',
       content: text,
       timestamp: timestamp,
@@ -156,7 +159,7 @@ export default function ProjectPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           file_id: selectedFileId,
-          author_name: 'You',
+          author_name: userName,
           author_role: 'creator',
           content: text,
           timestamp_data: timestamp,
@@ -165,7 +168,7 @@ export default function ProjectPage() {
     } catch (e) {
       console.error('Failed to save comment:', e);
     }
-  }, [selectedFileId]);
+  }, [selectedFileId, userName]);
 
   const handleStatusChange = useCallback(async (newStatus: string) => {
     // Optimistic update
