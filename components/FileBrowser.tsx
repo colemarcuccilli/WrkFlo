@@ -5,10 +5,16 @@ import GoogleDriveImporter from './GoogleDriveImporter';
 
 const fileStatusColors: Record<string, string> = {
   'draft': 'text-gray-500',
-  'in-review': 'text-orange-600',
-  'changes-requested': 'text-red-500',
-  'approved': 'text-emerald-600',
+  'in-review': '',
+  'changes-requested': '',
+  'approved': '',
   'locked': 'text-purple-600',
+};
+
+const fileStatusInlineColors: Record<string, string> = {
+  'in-review': '#15f3ec',
+  'changes-requested': 'rgba(255,80,80,0.9)',
+  'approved': '#16ffc0',
 };
 
 const fileStatusLabels: Record<string, string> = {
@@ -55,11 +61,19 @@ const fileTypeIcon = (type: string) => {
   }
 };
 
+const statusDotStyles: Record<string, string> = {
+  'draft': '',
+  'in-review': '#15f3ec',
+  'changes-requested': 'rgba(255,80,80,0.9)',
+  'approved': '#16ffc0',
+  'locked': '',
+};
+
 const statusDotClass: Record<string, string> = {
   'draft': 'bg-gray-400',
-  'in-review': 'bg-orange-500',
-  'changes-requested': 'bg-red-500',
-  'approved': 'bg-emerald-500',
+  'in-review': '',
+  'changes-requested': '',
+  'approved': '',
   'locked': 'bg-purple-500',
 };
 
@@ -76,9 +90,9 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
   const [showDriveImporter, setShowDriveImporter] = useState(false);
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Files</h2>
+    <div className="flex flex-col h-full" style={{ background: '#0a0a0f' }}>
+      <div className="px-4 py-3 flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>Files</h2>
         {projectId && (
           <div className="flex items-center gap-1">
             <button
@@ -98,7 +112,8 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
             <button
               onClick={() => { setShowUploader((v) => !v); if (!showUploader) setShowDriveImporter(false); }}
               title="Upload files"
-              className={`p-1 rounded-lg transition-colors ${showUploader ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`}
+              className="p-1 rounded-lg transition-colors"
+              style={showUploader ? { background: 'rgba(21,243,236,0.12)', color: '#15f3ec' } : { color: 'rgba(255,255,255,0.4)' }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -110,7 +125,7 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
 
       {/* Upload panel */}
       {showUploader && projectId && (
-        <div className="p-3 border-b border-gray-100 flex-shrink-0 bg-gray-50">
+        <div className="p-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
           <FileUploader
             projectId={projectId}
             onUploadComplete={(file: any) => {
@@ -123,7 +138,7 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
 
       {/* Google Drive import panel */}
       {showDriveImporter && projectId && (
-        <div className="border-b border-gray-100 flex-shrink-0 bg-gray-50">
+        <div className="flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
           <GoogleDriveImporter
             projectId={projectId}
             onImportComplete={(imported: any[]) => {
@@ -137,14 +152,15 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
       <div className="flex-1 overflow-y-auto">
         {files.length === 0 && !showUploader && (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-            <svg className="w-10 h-10 text-gray-200 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-10 h-10 mb-3" style={{ color: 'rgba(255,255,255,0.08)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
-            <p className="text-xs text-gray-400">No files yet</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>No files yet</p>
             {projectId && (
               <button
                 onClick={() => setShowUploader(true)}
-                className="mt-2 text-xs text-orange-500 hover:text-orange-600 font-medium"
+                className="mt-2 text-xs font-medium"
+                style={{ color: '#15f3ec' }}
               >
                 Upload first file →
               </button>
@@ -155,44 +171,48 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
         {files.map((file: any) => {
           const isSelected = file.id === selectedFileId;
           const colorClass = fileStatusColors[file.status] || 'text-gray-500';
+          const inlineColor = fileStatusInlineColors[file.status] || undefined;
           const dotClass = statusDotClass[file.status] || 'bg-gray-400';
+          const dotInlineColor = statusDotStyles[file.status] || undefined;
 
           return (
             <button
               key={file.id}
               onClick={() => onSelectFile(file)}
-              className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50 ${
-                isSelected ? 'bg-orange-50 border-l-2 border-l-orange-500' : ''
-              }`}
+              className={`w-full text-left px-4 py-3 transition-colors duration-150`}
+              style={{
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                ...(isSelected ? { background: 'rgba(21,243,236,0.08)', borderLeft: '2px solid #15f3ec' } : {}),
+              }}
             >
               <div className="flex items-start gap-3">
                 {/* Type icon */}
-                <div className={`mt-0.5 flex-shrink-0 ${colorClass}`}>
+                <div className={`mt-0.5 flex-shrink-0 ${colorClass}`} style={inlineColor ? { color: inlineColor } : undefined}>
                   {fileTypeIcon(file.type)}
                 </div>
 
                 {/* File info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-sm font-medium truncate ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                    <span className="text-sm font-medium truncate" style={{ color: isSelected ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.7)' }}>
                       {file.name}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {/* Version badge */}
-                    <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded font-mono">
+                    <span className="px-1.5 py-0.5 text-xs rounded font-mono" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}>
                       {file.version || 'V1'}
                     </span>
 
                     {/* Status dot */}
                     <span className="flex items-center gap-1">
-                      <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
-                      <span className={`text-xs ${colorClass}`}>{fileStatusLabels[file.status] || file.status}</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} style={dotInlineColor ? { background: dotInlineColor } : undefined} />
+                      <span className={`text-xs ${colorClass}`} style={inlineColor ? { color: inlineColor } : undefined}>{fileStatusLabels[file.status] || file.status}</span>
                     </span>
                   </div>
 
-                  <p className="text-xs text-gray-400 mt-1">{file.upload_date || file.uploadDate || ''}</p>
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{file.upload_date || file.uploadDate || ''}</p>
                 </div>
 
                 {/* Lock icon for locked files */}

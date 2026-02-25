@@ -30,10 +30,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes — redirect to login if not authenticated
-  const protectedPaths = ['/dashboard', '/project/', '/projects/', '/team', '/settings']
   const { pathname } = request.nextUrl
 
+  // Protected routes — redirect to login if not authenticated
+  const protectedPaths = ['/dashboard', '/project/', '/projects/', '/team', '/settings', '/clients', '/client-dashboard', '/review/']
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path))
 
   if (isProtected && !user) {
@@ -41,6 +41,34 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
+  }
+
+  // Role-based routing for authenticated users
+  if (user && isProtected) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = profile?.role || 'creator'
+
+    // Client accessing creator-only pages -> redirect to client dashboard
+    const creatorOnlyPaths = ['/dashboard', '/project/', '/projects/', '/clients', '/team', '/settings']
+    const isCreatorPage = creatorOnlyPaths.some((path) => pathname.startsWith(path))
+
+    if (role === 'client' && isCreatorPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/client-dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // Creator accessing client dashboard -> redirect to dashboard
+    if (role === 'creator' && pathname.startsWith('/client-dashboard')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

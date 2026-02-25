@@ -5,18 +5,34 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
 import GoogleDriveConnect from '@/components/GoogleDriveConnect';
+import AppHeader from '@/components/AppHeader';
+
+const CYAN = '#15f3ec';
+const BLUE = '#5bc7f9';
+const MINT = '#16ffc0';
+const BG = '#0a0a0f';
+const CARD_BG = 'rgba(255,255,255,0.03)';
+const CARD_BORDER = 'rgba(255,255,255,0.06)';
+const INPUT_BG = 'rgba(255,255,255,0.05)';
+const INPUT_BORDER = 'rgba(255,255,255,0.1)';
+const TOGGLE_OFF = 'rgba(255,255,255,0.12)';
 
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg animate-fade-in"
-      style={{ animation: 'fadeInUp 0.3s ease' }}
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-lg"
+      style={{
+        background: 'rgba(10,10,15,0.95)',
+        border: `1px solid rgba(22,255,192,0.2)`,
+        backdropFilter: 'blur(12px)',
+        animation: 'fadeInUp 0.3s ease',
+      }}
       onAnimationEnd={() => setTimeout(onDone, 2500)}
     >
-      <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={MINT}>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
       </svg>
-      <span className="text-sm font-medium">{message}</span>
+      <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{message}</span>
     </div>
   );
 }
@@ -113,62 +129,85 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   };
 
+  /* --- shared inline style helpers --- */
+  const cardStyle: React.CSSProperties = {
+    background: CARD_BG,
+    border: `1px solid ${CARD_BORDER}`,
+    borderRadius: 16,
+    padding: 24,
+  };
+
+  const inputStyle: React.CSSProperties = {
+    background: INPUT_BG,
+    border: `1px solid ${INPUT_BORDER}`,
+    borderRadius: 8,
+    padding: '8px 12px',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    outline: 'none',
+    width: '100%',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 12,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.5)',
+    marginBottom: 6,
+  };
+
+  const saveBtnStyle: React.CSSProperties = {
+    background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+    color: '#0a0a0f',
+    fontWeight: 600,
+    fontSize: 14,
+    borderRadius: 12,
+    padding: '8px 16px',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    boxShadow: `0 4px 20px rgba(21,243,236,0.25)`,
+    transition: 'box-shadow 0.2s, opacity 0.2s',
+  };
+
+  const sectionTitleStyle: React.CSSProperties = {
+    fontSize: 15,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.95)',
+    marginBottom: 16,
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
-            <span className="font-bold text-lg tracking-tight text-gray-900">WrkFlo</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-            <Link href="/team" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Team</Link>
-            <Link href="/settings" className="text-sm font-medium text-gray-900 border-b-2 border-orange-500 pb-0.5">Settings</Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link href="/projects/new">
-              <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Project
-              </button>
-            </Link>
-            <div
-              className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-700 overflow-hidden cursor-pointer"
-              onClick={() => photoInputRef.current?.click()}
-            >
-              {photoPreview ? (
-                <img src={photoPreview} alt="avatar" className="w-full h-full object-cover" />
-              ) : (
-                userInitial
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ background: BG }}>
+      <AppHeader />
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your account and workspace preferences.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'rgba(255,255,255,0.95)' }}>
+            Settings
+          </h1>
+          <p className="mt-1" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+            Manage your account and workspace preferences.
+          </p>
         </div>
 
         {/* Profile Settings */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Profile</h2>
+        <div style={{ ...cardStyle, marginBottom: 24 }}>
+          <h2 style={sectionTitleStyle}>Profile</h2>
           <div className="flex items-center gap-4 mb-6">
             <div
-              className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-xl font-bold text-orange-700 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative"
+              className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold overflow-hidden cursor-pointer transition-opacity relative"
+              style={{
+                background: `linear-gradient(135deg, rgba(21,243,236,0.15), rgba(22,255,192,0.1))`,
+                border: `2px solid rgba(21,243,236,0.3)`,
+                color: CYAN,
+              }}
               onClick={() => photoInputRef.current?.click()}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
             >
               {photoPreview ? (
                 <img src={photoPreview} alt="avatar" className="w-full h-full object-cover" />
@@ -178,12 +217,17 @@ export default function SettingsPage() {
             </div>
             <div>
               <button
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                className="text-sm font-medium"
+                style={{ color: CYAN, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 onClick={() => photoInputRef.current?.click()}
+                onMouseEnter={(e) => (e.currentTarget.style.color = MINT)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = CYAN)}
               >
                 Change photo
               </button>
-              <p className="text-xs text-gray-400 mt-0.5">JPG, PNG or GIF · Max 2MB</p>
+              <p className="mt-0.5" style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
+                JPG, PNG or GIF &middot; Max 2MB
+              </p>
               <input
                 ref={photoInputRef}
                 type="file"
@@ -195,47 +239,79 @@ export default function SettingsPage() {
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Full Name</label>
+              <label style={labelStyle}>Full Name</label>
               <input
                 type="text"
                 value={profile.name}
                 onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-orange-400 bg-white"
+                style={inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = CYAN;
+                  e.currentTarget.style.boxShadow = `0 0 0 2px rgba(21,243,236,0.15)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = INPUT_BORDER;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Email</label>
+              <label style={labelStyle}>Email</label>
               <input
                 type="email"
                 value={profile.email}
                 onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-orange-400 bg-white"
+                style={inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = CYAN;
+                  e.currentTarget.style.boxShadow = `0 0 0 2px rgba(21,243,236,0.15)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = INPUT_BORDER;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Role</label>
+              <label style={labelStyle}>Role</label>
               <select
                 value={profile.role}
                 onChange={(e) => setProfile((p) => ({ ...p, role: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-orange-400 bg-white"
+                style={{ ...inputStyle, appearance: 'none' as const, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = CYAN;
+                  e.currentTarget.style.boxShadow = `0 0 0 2px rgba(21,243,236,0.15)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = INPUT_BORDER;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
-                <option>Creative Director</option>
-                <option>Video Producer</option>
-                <option>Graphic Designer</option>
-                <option>Audio Engineer</option>
+                <option value="Creative Director">Creative Director</option>
+                <option value="Video Producer">Video Producer</option>
+                <option value="Graphic Designer">Graphic Designer</option>
+                <option value="Audio Engineer">Audio Engineer</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Time Zone</label>
+              <label style={labelStyle}>Time Zone</label>
               <select
                 value={profile.timezone}
                 onChange={(e) => setProfile((p) => ({ ...p, timezone: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-orange-400 bg-white"
+                style={{ ...inputStyle, appearance: 'none' as const, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = CYAN;
+                  e.currentTarget.style.boxShadow = `0 0 0 2px rgba(21,243,236,0.15)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = INPUT_BORDER;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
-                <option>Eastern Time (ET)</option>
-                <option>Pacific Time (PT)</option>
-                <option>Central Time (CT)</option>
-                <option>Mountain Time (MT)</option>
+                <option value="Eastern Time (ET)">Eastern Time (ET)</option>
+                <option value="Pacific Time (PT)">Pacific Time (PT)</option>
+                <option value="Central Time (CT)">Central Time (CT)</option>
+                <option value="Mountain Time (MT)">Mountain Time (MT)</option>
               </select>
             </div>
           </div>
@@ -243,7 +319,13 @@ export default function SettingsPage() {
             <button
               onClick={handleSaveProfile}
               disabled={savingProfile}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+              style={{
+                ...saveBtnStyle,
+                opacity: savingProfile ? 0.5 : 1,
+                cursor: savingProfile ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => { if (!savingProfile) e.currentTarget.style.boxShadow = `0 6px 28px rgba(21,243,236,0.35)`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = `0 4px 20px rgba(21,243,236,0.25)`; }}
             >
               {savingProfile ? (
                 <>
@@ -261,8 +343,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Notification Settings */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Notifications</h2>
+        <div style={{ ...cardStyle, marginBottom: 24 }}>
+          <h2 style={sectionTitleStyle}>Notifications</h2>
           <div className="space-y-4">
             {[
               { key: 'comments', label: 'New Comments', desc: 'When a client or teammate leaves a comment' },
@@ -270,29 +352,43 @@ export default function SettingsPage() {
               { key: 'changesRequested', label: 'Changes Requested', desc: 'When changes are requested on a file' },
               { key: 'newUploads', label: 'New Uploads', desc: 'When a team member uploads a new file' },
               { key: 'weeklyDigest', label: 'Weekly Digest', desc: 'Summary of project activity every Monday' },
-            ].map((item) => (
-              <div key={item.key} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+            ].map((item) => {
+              const isOn = notifications[item.key as keyof typeof notifications];
+              return (
+                <div key={item.key} className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{item.label}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{item.desc}</p>
+                  </div>
+                  <button
+                    onClick={() => toggle(item.key)}
+                    className="relative w-10 h-5 rounded-full transition-colors"
+                    style={{
+                      background: isOn ? CYAN : TOGGLE_OFF,
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: isOn ? `0 0 10px rgba(21,243,236,0.3)` : 'none',
+                      transition: 'background 0.2s, box-shadow 0.2s',
+                    }}
+                  >
+                    <div
+                      className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full shadow transition-transform"
+                      style={{
+                        background: isOn ? '#0a0a0f' : 'rgba(255,255,255,0.5)',
+                        transform: isOn ? 'translateX(20px)' : 'translateX(0)',
+                      }}
+                    />
+                  </button>
                 </div>
-                <button
-                  onClick={() => toggle(item.key)}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${
-                    notifications[item.key as keyof typeof notifications] ? 'bg-orange-500' : 'bg-gray-200'
-                  }`}
-                >
-                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                    notifications[item.key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'
-                  }`} />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="mt-4 flex justify-end">
             <button
               onClick={() => showToast('Notification preferences saved')}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors"
+              style={saveBtnStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 6px 28px rgba(21,243,236,0.35)`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = `0 4px 20px rgba(21,243,236,0.25)`; }}
             >
               Save Preferences
             </button>
@@ -301,45 +397,73 @@ export default function SettingsPage() {
 
         {/* Integrations */}
         <div className="mb-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-3">Integrations</h2>
+          <h2 className="mb-3" style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>Integrations</h2>
           <GoogleDriveConnect />
         </div>
 
         {/* Branding */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Workspace Branding</h2>
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-orange-300 transition-colors cursor-pointer">
-            <svg className="w-8 h-8 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div style={cardStyle}>
+          <h2 style={sectionTitleStyle}>Workspace Branding</h2>
+          <div
+            className="rounded-xl p-8 text-center cursor-pointer transition-colors"
+            style={{
+              border: `2px dashed rgba(255,255,255,0.08)`,
+              background: 'rgba(255,255,255,0.02)',
+              transition: 'border-color 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = `rgba(21,243,236,0.25)`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = `rgba(255,255,255,0.08)`; }}
+          >
+            <svg className="w-8 h-8 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.25)">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p className="text-sm font-medium text-gray-700">Upload your logo</p>
-            <p className="text-xs text-gray-400 mt-1">PNG or SVG · Appears on client review pages</p>
-            <p className="text-xs text-orange-500 mt-2 font-medium">Coming soon</p>
+            <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>Upload your logo</p>
+            <p className="mt-1" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
+              PNG or SVG &middot; Appears on client review pages
+            </p>
+            <p className="mt-2 font-medium" style={{ fontSize: 12, color: CYAN }}>Coming soon</p>
           </div>
           <div className="mt-4 grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Workspace Name</label>
+              <label style={labelStyle}>Workspace Name</label>
               <input
                 type="text"
                 value={branding.workspaceName}
                 onChange={(e) => setBranding((b) => ({ ...b, workspaceName: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-orange-400"
+                style={inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = CYAN;
+                  e.currentTarget.style.boxShadow = `0 0 0 2px rgba(21,243,236,0.15)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = INPUT_BORDER;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Accent Color</label>
+              <label style={labelStyle}>Accent Color</label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={branding.accentColor}
                   onChange={(e) => setBranding((b) => ({ ...b, accentColor: e.target.value }))}
-                  className="w-10 h-9 border border-gray-200 rounded-lg cursor-pointer"
+                  className="w-10 h-9 rounded-lg cursor-pointer"
+                  style={{ background: INPUT_BG, border: `1px solid ${INPUT_BORDER}` }}
                 />
                 <input
                   type="text"
                   value={branding.accentColor}
                   onChange={(e) => setBranding((b) => ({ ...b, accentColor: e.target.value }))}
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 font-mono focus:outline-none focus:border-orange-400"
+                  style={{ ...inputStyle, fontFamily: 'monospace' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = CYAN;
+                    e.currentTarget.style.boxShadow = `0 0 0 2px rgba(21,243,236,0.15)`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = INPUT_BORDER;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
               </div>
             </div>
@@ -348,7 +472,13 @@ export default function SettingsPage() {
             <button
               onClick={handleSaveBranding}
               disabled={savingBranding}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+              style={{
+                ...saveBtnStyle,
+                opacity: savingBranding ? 0.5 : 1,
+                cursor: savingBranding ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => { if (!savingBranding) e.currentTarget.style.boxShadow = `0 6px 28px rgba(21,243,236,0.35)`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = `0 4px 20px rgba(21,243,236,0.25)`; }}
             >
               {savingBranding ? (
                 <>
@@ -366,15 +496,30 @@ export default function SettingsPage() {
         </div>
 
         {/* Sign Out */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mt-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900 mb-2">Account</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Signed in as <span className="font-medium text-gray-700">{user?.email}</span>
+        <div style={{ ...cardStyle, marginTop: 24 }}>
+          <h2 style={{ ...sectionTitleStyle, marginBottom: 8 }}>Account</h2>
+          <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            Signed in as{' '}
+            <span className="font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>{user?.email}</span>
           </p>
           <form action="/auth/signout" method="POST">
             <button
               type="submit"
-              className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                color: '#f87171',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239,68,68,0.15)';
+                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239,68,68,0.1)';
+                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)';
+              }}
             >
               Sign Out
             </button>
@@ -389,6 +534,15 @@ export default function SettingsPage() {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        /* Dark select options for browsers that support it */
+        .settings-page select option {
+          background: #0a0a0f;
+          color: rgba(255,255,255,0.9);
+        }
+        select option {
+          background: #1a1a2e;
+          color: rgba(255,255,255,0.9);
         }
       `}</style>
     </div>

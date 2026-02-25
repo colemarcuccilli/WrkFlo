@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     projectId: c.files?.project_id,
     projectName: c.files?.projects?.name,
     time: c.created_at ? new Date(c.created_at).toLocaleDateString() : '',
-    color: c.author_role === 'client' ? 'text-orange-500' : 'text-orange-600',
+    color: c.author_role === 'client' ? 'text-cyan' : 'text-mint',
   }))
 
   return NextResponse.json(activities)

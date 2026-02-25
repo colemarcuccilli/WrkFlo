@@ -1,6 +1,7 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 import FileBrowser from '@/components/FileBrowser';
 import FilePreview from '@/components/FilePreview';
 import CommentFeed from '@/components/CommentFeed';
@@ -9,9 +10,17 @@ import ApprovalBar from '@/components/ApprovalBar';
 import VersionHistory from '@/components/VersionHistory';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import MobileCommentSheet from '@/components/MobileCommentSheet';
-import GuestNameModal from '@/components/GuestNameModal';
 import RealtimeComments from '@/components/RealtimeComments';
-import ReviewPasswordGate from '@/components/ReviewPasswordGate';
+
+const CYAN = '#15f3ec';
+const BLUE = '#5bc7f9';
+const MINT = '#16ffc0';
+const BG = '#0a0a0f';
+const CARD_BG = 'rgba(255,255,255,0.03)';
+const CARD_BORDER = 'rgba(255,255,255,0.06)';
+const TEXT_PRIMARY = 'rgba(255,255,255,0.9)';
+const TEXT_SECONDARY = 'rgba(255,255,255,0.6)';
+const TEXT_TERTIARY = 'rgba(255,255,255,0.4)';
 
 function normalizeFile(f: any) {
   return {
@@ -46,6 +55,8 @@ function normalizeProject(p: any) {
 
 export default function ReviewPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
   const token = params.token as string;
 
   const [project, setProject] = useState<any>(null);
@@ -53,12 +64,25 @@ export default function ReviewPage() {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [allApproved, setAllApproved] = useState(false);
   const [showMobileComment, setShowMobileComment] = useState(false);
-  const [guestName, setGuestName] = useState<string | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [authError, setAuthError] = useState(false);
+
+  // Get display name from authenticated user
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reviewer';
 
   useEffect(() => {
     fetch(`/api/review/${token}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (r.status === 401) {
+          setAuthError(true);
+          setLoading(false);
+          return null;
+        }
+        if (r.status === 403) {
+          setLoading(false);
+          return null;
+        }
+        return r.json();
+      })
       .then((data) => {
         if (data && data.id) {
           const normalized = normalizeProject(data);
@@ -70,12 +94,32 @@ export default function ReviewPage() {
       .catch(() => setLoading(false));
   }, [token]);
 
+  // Handle auth redirect
+  useEffect(() => {
+    if (authError) {
+      router.push(`/login?redirect=/review/${token}`);
+    }
+  }, [authError, router, token]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading review...</p>
+          <div
+            className="w-8 h-8 rounded-full animate-spin mx-auto mb-4"
+            style={{ border: `2px solid ${CYAN}`, borderTopColor: 'transparent' }}
+          />
+          <p style={{ color: TEXT_SECONDARY }}>Loading review...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+        <div className="text-center">
+          <p style={{ color: TEXT_SECONDARY }}>Redirecting to login...</p>
         </div>
       </div>
     );
@@ -83,33 +127,20 @@ export default function ReviewPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: CARD_BG }}
+          >
+            <svg className="w-8 h-8" style={{ color: TEXT_TERTIARY }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Review link not found</h1>
-          <p className="text-gray-500">This review link may have expired or been removed.</p>
+          <h1 className="text-xl font-bold mb-2" style={{ color: TEXT_PRIMARY }}>Review link not found</h1>
+          <p style={{ color: TEXT_SECONDARY }}>This review link may have expired, been removed, or you don&apos;t have access.</p>
         </div>
       </div>
-    );
-  }
-
-  // Password gate: if project has a review_password and not yet unlocked
-  if (project.review_password && !isUnlocked) {
-    return (
-      <ReviewPasswordGate
-        projectName={project.name}
-        onUnlock={async (pw: string) => {
-          if (pw === project.review_password) {
-            setIsUnlocked(true);
-            return true;
-          }
-          return false;
-        }}
-      />
     );
   }
 
@@ -125,8 +156,7 @@ export default function ReviewPage() {
     setSelectedFileId(file.id);
   };
 
-  const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
-    const displayName = guestName || 'Client';
+  const handleAddComment = async ({ text, timestamp }: { text: string; timestamp: any }) => {
     const newComment = {
       id: `c-client-${Date.now()}`,
       author: displayName,
@@ -160,9 +190,9 @@ export default function ReviewPage() {
     } catch (e) {
       console.error('Failed to save comment:', e);
     }
-  }, [selectedFileId, guestName]);
+  };
 
-  const handleStatusChange = useCallback(async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     // Optimistic update
     setProject((prev: any) => {
       const updated = {
@@ -189,7 +219,7 @@ export default function ReviewPage() {
     } catch (e) {
       console.error('Failed to save status:', e);
     }
-  }, [selectedFileId]);
+  };
 
   const handleSeekToTimestamp = (ts: number) => {
     if (typeof window !== 'undefined' && (window as any).__wrkflo_seek) {
@@ -198,36 +228,51 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: BG }}>
       {/* Invite banner */}
-      <div className="bg-orange-50 border-b border-orange-200 flex-shrink-0">
+      <div
+        className="flex-shrink-0"
+        style={{
+          background: 'rgba(21,243,236,0.06)',
+          borderBottom: `1px solid rgba(21,243,236,0.15)`,
+        }}
+      >
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: `linear-gradient(135deg, ${CYAN}, ${MINT})` }}
+            >
+              <svg className="w-4 h-4" style={{ color: BG }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-orange-900">
-                You've been invited to review <span className="font-bold">{project.name}</span> by{' '}
+              <p className="text-sm font-medium" style={{ color: TEXT_PRIMARY }}>
+                You&apos;re reviewing <span className="font-bold">{project.name}</span> by{' '}
                 <span className="font-bold">{project.creatorName}</span>
               </p>
-              <p className="text-xs text-orange-600 mt-0.5">
-                Client: {project.client} · {approvedCount}/{totalFiles} files approved
+              <p className="text-xs mt-0.5" style={{ color: TEXT_SECONDARY }}>
+                Signed in as {displayName} · {approvedCount}/{totalFiles} files approved
               </p>
             </div>
           </div>
 
           <div className="hidden md:flex items-center gap-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-32 h-1.5 bg-orange-200 rounded-full overflow-hidden">
+              <div
+                className="w-32 h-1.5 rounded-full overflow-hidden"
+                style={{ background: 'rgba(21,243,236,0.15)' }}
+              >
                 <div
-                  className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                  style={{ width: `${totalFiles > 0 ? (approvedCount / totalFiles) * 100 : 0}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${totalFiles > 0 ? (approvedCount / totalFiles) * 100 : 0}%`,
+                    background: CYAN,
+                  }}
                 />
               </div>
-              <span className="text-xs text-orange-700">{approvedCount}/{totalFiles}</span>
+              <span className="text-xs" style={{ color: CYAN }}>{approvedCount}/{totalFiles}</span>
             </div>
           </div>
         </div>
@@ -238,7 +283,10 @@ export default function ReviewPage() {
       )}
 
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
-        <div className="w-60 flex-shrink-0 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
+        <div
+          className="w-60 flex-shrink-0 overflow-hidden flex flex-col"
+          style={{ background: BG, borderRight: `1px solid ${CARD_BORDER}` }}
+        >
           <FileBrowser
             files={project.files}
             selectedFileId={selectedFileId}
@@ -246,10 +294,13 @@ export default function ReviewPage() {
           />
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
+        <div className="flex-1 overflow-hidden flex flex-col" style={{ background: BG }}>
           {selectedFile && (
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200 bg-white flex-shrink-0">
-              <span className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</span>
+            <div
+              className="flex items-center gap-3 px-4 py-2.5 flex-shrink-0"
+              style={{ background: BG, borderBottom: `1px solid ${CARD_BORDER}` }}
+            >
+              <span className="text-sm font-medium truncate" style={{ color: TEXT_PRIMARY }}>{selectedFile.name}</span>
               <div className="ml-auto flex-shrink-0">
                 <VersionHistory file={selectedFile} />
               </div>
@@ -265,10 +316,16 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        <div className="w-80 flex-shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 flex-shrink-0">
-            <h2 className="text-sm font-semibold text-gray-900">Your Feedback</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
+        <div
+          className="w-80 flex-shrink-0 flex flex-col overflow-hidden"
+          style={{ background: BG, borderLeft: `1px solid ${CARD_BORDER}` }}
+        >
+          <div
+            className="px-4 py-3 flex-shrink-0"
+            style={{ borderBottom: `1px solid ${CARD_BORDER}` }}
+          >
+            <h2 className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>Your Feedback</h2>
+            <p className="text-xs mt-0.5" style={{ color: TEXT_SECONDARY }}>
               {fileComments.length} comment{fileComments.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -282,8 +339,11 @@ export default function ReviewPage() {
             </div>
           )}
 
-          <div className="mx-4 mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 flex-shrink-0">
-            <p className="text-xs text-gray-500 leading-relaxed">
+          <div
+            className="mx-4 mt-3 rounded-lg p-3 flex-shrink-0"
+            style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+          >
+            <p className="text-xs leading-relaxed" style={{ color: TEXT_SECONDARY }}>
               Leave comments below or click directly on the {selectedFile?.type === 'image' ? 'image to pin feedback' : selectedFile?.type === 'video' || selectedFile?.type === 'audio' ? 'timeline to timestamp your feedback' : 'file to annotate'}.
             </p>
           </div>
@@ -296,7 +356,10 @@ export default function ReviewPage() {
             />
           </div>
 
-          <div className="px-4 pb-4 pt-2 border-t border-gray-200 flex-shrink-0">
+          <div
+            className="px-4 pb-4 pt-2 flex-shrink-0"
+            style={{ borderTop: `1px solid ${CARD_BORDER}` }}
+          >
             <CommentInput
               onSubmit={handleAddComment}
               disabled={selectedFile?.status === 'locked'}
@@ -308,7 +371,12 @@ export default function ReviewPage() {
       {/* Mobile floating comment button */}
       <button
         onClick={() => setShowMobileComment(true)}
-        className="fixed bottom-6 right-6 z-30 md:hidden flex items-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white text-sm font-semibold rounded-full shadow-lg shadow-orange-600/30 transition-all active:scale-95"
+        className="fixed bottom-6 right-6 z-30 md:hidden flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-full transition-all active:scale-95"
+        style={{
+          background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+          color: BG,
+          boxShadow: `0 10px 25px -5px rgba(21,243,236,0.3)`,
+        }}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -345,14 +413,6 @@ export default function ReviewPage() {
           });
         }}
       />
-
-      {/* Guest name modal — shown on first visit */}
-      {guestName === null && (
-        <GuestNameModal
-          projectName={project.name}
-          onNameSet={(name) => setGuestName(name)}
-        />
-      )}
     </div>
   );
 }

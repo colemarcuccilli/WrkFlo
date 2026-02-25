@@ -10,7 +10,7 @@ interface CompletionCelebrationProps {
 function runConfetti(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  
+
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -19,8 +19,8 @@ function runConfetti(canvas: HTMLCanvasElement) {
     color: string; size: number; rotation: number; rotationSpeed: number; opacity: number;
   }> = [];
 
-  const colors = ['#f97316', '#ef4444', '#f59e0b', '#10b981', '#fb923c', '#fbbf24'];
-  
+  const colors = ['#15f3ec', '#16ffc0', '#0cc8c2', '#0aa09b', '#1ad4ce', '#12e0d8'];
+
   for (let i = 0; i < 150; i++) {
     particles.push({
       x: Math.random() * canvas.width,
@@ -41,7 +41,7 @@ function runConfetti(canvas: HTMLCanvasElement) {
   const animate = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     frame++;
-    
+
     particles.forEach((p) => {
       p.x += p.vx;
       p.y += p.vy;
@@ -50,7 +50,7 @@ function runConfetti(canvas: HTMLCanvasElement) {
       if (frame > maxFrames * 0.7) {
         p.opacity = Math.max(0, p.opacity - 0.02);
       }
-      
+
       ctx.save();
       ctx.globalAlpha = p.opacity;
       ctx.translate(p.x, p.y);
@@ -105,13 +105,15 @@ export default function CompletionCelebration({ project, onClose }: CompletionCe
 
       {/* Summary card */}
       <div
-        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center transition-all duration-300 ${visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+        className={`relative rounded-2xl shadow-2xl w-full max-w-md p-8 text-center transition-all duration-300 ${visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+        style={{ background: 'rgba(10,10,15,0.95)', border: '1px solid rgba(255,255,255,0.08)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 right-4 transition-colors"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -119,36 +121,36 @@ export default function CompletionCelebration({ project, onClose }: CompletionCe
         </button>
 
         {/* Trophy icon */}
-        <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/30">
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'linear-gradient(135deg, #15f3ec, #16ffc0)', boxShadow: '0 4px 14px rgba(21,243,236,0.3)' }}>
           <span className="text-4xl">🏆</span>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold mb-2" style={{ color: 'rgba(255,255,255,0.9)' }}>
           Project Complete!
         </h2>
-        <p className="text-gray-500 mb-6">
-          <span className="font-semibold text-gray-700">{project.name}</span> has been fully approved by{' '}
-          <span className="font-semibold text-gray-700">{project.client || project.client_name}</span>. 🎉
+        <p className="mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>{project.name}</span> has been fully approved by{' '}
+          <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>{project.client || project.client_name}</span>. 🎉
         </p>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-orange-50 rounded-xl p-3">
-            <p className="text-2xl font-bold text-orange-600">{totalFiles}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Files Approved</p>
+          <div className="rounded-xl p-3" style={{ background: 'rgba(21,243,236,0.08)' }}>
+            <p className="text-2xl font-bold" style={{ color: '#15f3ec' }}>{totalFiles}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Files Approved</p>
           </div>
-          <div className="bg-emerald-50 rounded-xl p-3">
-            <p className="text-2xl font-bold text-emerald-600">100%</p>
-            <p className="text-xs text-gray-500 mt-0.5">Completion</p>
+          <div className="rounded-xl p-3" style={{ background: 'rgba(22,255,192,0.08)' }}>
+            <p className="text-2xl font-bold" style={{ color: '#16ffc0' }}>100%</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Completion</p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-3">
-            <p className="text-2xl font-bold text-gray-700">{totalComments}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Comments</p>
+          <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <p className="text-2xl font-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>{totalComments}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Comments</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-1 text-xs text-gray-500 mb-6">
-          <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center justify-center gap-1 text-xs mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <svg className="w-4 h-4" style={{ color: '#16ffc0' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           All {totalFiles} file{totalFiles !== 1 ? 's' : ''} approved
@@ -157,7 +159,8 @@ export default function CompletionCelebration({ project, onClose }: CompletionCe
         <div className="flex gap-3">
           <button
             onClick={handleClose}
-            className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors"
+            style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
           >
             Close
           </button>
@@ -168,7 +171,8 @@ export default function CompletionCelebration({ project, onClose }: CompletionCe
               );
               handleClose();
             }}
-            className="flex-1 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors"
+            style={{ background: '#15f3ec', color: '#0a0a0f' }}
           >
             Share Link
           </button>

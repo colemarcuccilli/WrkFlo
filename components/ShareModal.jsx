@@ -1,19 +1,40 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ShareModal({ project, onClose, onSetPassword = null }) {
   const [copied, setCopied] = useState(false);
   const [msgCopied, setMsgCopied] = useState(false);
-  const [showPasswordPanel, setShowPasswordPanel] = useState(false);
-  const [password, setPassword] = useState('');
-  const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [assignedIds, setAssignedIds] = useState(new Set());
+  const [loadingClients, setLoadingClients] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const reviewUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/review/${project.reviewToken || project.review_token}`
     : `/review/${project.reviewToken || project.review_token}`;
 
-  const prewrittenMessage = `Hey! I've finished your ${project.name} and it's ready for your review.\n\nClick here to view the files, leave comments, and approve: ${reviewUrl}\n\nNo account needed — just click the link. Let me know if you have any questions!`;
+  const prewrittenMessage = `Hey! I've finished your ${project.name} and it's ready for your review.\n\nClick here to view the files, leave comments, and approve: ${reviewUrl}\n\nSign in with your account to access the review. Let me know if you have any questions!`;
+
+  useEffect(() => {
+    // Fetch creator's clients and which ones have access to this project
+    fetch('/api/clients')
+      .then((r) => r.json())
+      .then((data) => {
+        const activeClients = (data.clients || []).filter((c) => c.status !== 'revoked');
+        setClients(activeClients);
+
+        // Check which clients have access to this project
+        const assigned = new Set();
+        activeClients.forEach((c) => {
+          if (c.client_project_access?.some((a) => a.project_id === project.id)) {
+            assigned.add(c.id);
+          }
+        });
+        setAssignedIds(assigned);
+        setLoadingClients(false);
+      })
+      .catch(() => setLoadingClients(false));
+  }, [project.id]);
 
   const copyLink = async () => {
     try {
@@ -43,48 +64,107 @@ export default function ShareModal({ project, onClose, onSetPassword = null }) {
     }
   };
 
-  const handleSavePassword = async () => {
-    setPasswordSaving(true);
-    try {
-      await fetch(`/api/projects/${project.id}`, {
-        method: 'PATCH',
+  const toggleClientAccess = async (clientRecord) => {
+    setSaving(true);
+    const isAssigned = assignedIds.has(clientRecord.id);
+
+    if (isAssigned) {
+      await fetch(`/api/clients/${clientRecord.id}/projects/${project.id}`, { method: 'DELETE' });
+      setAssignedIds((prev) => { const next = new Set(prev); next.delete(clientRecord.id); return next; });
+    } else {
+      const res = await fetch(`/api/clients/${clientRecord.id}/projects`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ review_password: password || null }),
+        body: JSON.stringify({ project_id: project.id }),
       });
-      setPasswordSaved(true);
-      setTimeout(() => setPasswordSaved(false), 2000);
-    } catch {}
-    setPasswordSaving(false);
+      if (res.ok) {
+        setAssignedIds((prev) => new Set(prev).add(clientRecord.id));
+      }
+    }
+    setSaving(false);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Share with Client</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{project.client || project.client_name} • {project.name}</p>
+            <h2 className="text-base font-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>Share with Client</h2>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{project.client || project.client_name} &bull; {project.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
+        {/* Client access section */}
+        <div className="mb-4">
+          <p className="text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>Assign to Client</p>
+          {loadingClients ? (
+            <div className="text-xs p-3 rounded-lg" style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)' }}>Loading clients...</div>
+          ) : clients.length === 0 ? (
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>No clients yet.</p>
+              <a href="/clients" className="text-xs font-medium" style={{ color: '#15f3ec' }}>
+                Invite your first client →
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {clients.map((client) => (
+                <button
+                  key={client.id}
+                  onClick={() => toggleClientAccess(client)}
+                  disabled={saving}
+                  className="w-full flex items-center justify-between p-2.5 rounded-lg border text-left transition-colors"
+                  style={
+                    assignedIds.has(client.id)
+                      ? { borderColor: 'rgba(21,243,236,0.3)', background: 'rgba(21,243,236,0.08)' }
+                      : { borderColor: 'rgba(255,255,255,0.08)' }
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(21,243,236,0.12)', color: '#15f3ec' }}>
+                      {client.client_email[0].toUpperCase()}
+                    </div>
+                    <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{client.client_email}</span>
+                  </div>
+                  <div className="w-4 h-4 rounded border-2 flex items-center justify-center" style={
+                    assignedIds.has(client.id)
+                      ? { borderColor: '#15f3ec', background: '#15f3ec' }
+                      : { borderColor: 'rgba(255,255,255,0.3)' }
+                  }>
+                    {assignedIds.has(client.id) && (
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+              ))}
+              <a href="/clients" className="block text-xs font-medium mt-2 ml-1" style={{ color: '#15f3ec' }}>
+                + Invite new client
+              </a>
+            </div>
+          )}
+        </div>
+
         {/* Review link */}
         <div className="mb-4">
-          <p className="text-xs font-medium text-gray-700 mb-2">Review Link</p>
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <span className="flex-1 text-sm text-gray-600 truncate font-mono">{reviewUrl}</span>
+          <p className="text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>Review Link</p>
+          <div className="flex items-center gap-2 rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <span className="flex-1 text-sm truncate font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{reviewUrl}</span>
             <button
               onClick={copyLink}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              style={
                 copied
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-orange-600 hover:bg-orange-500 text-white'
-              }`}
+                  ? { background: 'rgba(22,255,192,0.12)', color: '#16ffc0' }
+                  : { background: '#15f3ec', color: '#0a0a0f' }
+              }
             >
               {copied ? (
                 <>
@@ -103,67 +183,33 @@ export default function ShareModal({ project, onClose, onSetPassword = null }) {
               )}
             </button>
           </div>
-          <div className="flex items-center justify-between mt-1.5">
-            <p className="text-xs text-gray-400">✓ No account required for your client</p>
-            <button
-              onClick={() => setShowPasswordPanel(!showPasswordPanel)}
-              className="text-xs text-gray-400 hover:text-orange-600 transition-colors"
-            >
-              {showPasswordPanel ? 'Hide' : '🔒 Add password'}
-            </button>
-          </div>
+          <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Clients must be signed in to access the review</p>
         </div>
-
-        {/* Password Panel */}
-        {showPasswordPanel && (
-          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-xs font-medium text-gray-700 mb-2">Optional Password Protection</p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Set a password (or leave blank to remove)"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
-              />
-              <button
-                onClick={handleSavePassword}
-                disabled={passwordSaving}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  passwordSaved
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-orange-600 hover:bg-orange-500 text-white'
-                }`}
-              >
-                {passwordSaved ? '✓' : passwordSaving ? '...' : 'Save'}
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mt-1.5">Client will be prompted for this password before viewing</p>
-          </div>
-        )}
 
         {/* Pre-written message */}
         <div className="mb-5">
-          <p className="text-xs font-medium text-gray-700 mb-2">Or copy a ready-to-send message</p>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{prewrittenMessage}</p>
+          <p className="text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>Or copy a ready-to-send message</p>
+          <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-xs leading-relaxed whitespace-pre-line" style={{ color: 'rgba(255,255,255,0.6)' }}>{prewrittenMessage}</p>
           </div>
           <button
             onClick={copyMessage}
-            className={`mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
+            className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border"
+            style={
               msgCopied
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
+                ? { background: 'rgba(22,255,192,0.08)', borderColor: 'rgba(22,255,192,0.2)', color: '#16ffc0' }
+                : { background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }
+            }
           >
-            {msgCopied ? '✓ Message copied!' : 'Copy message'}
+            {msgCopied ? 'Message copied!' : 'Copy message'}
           </button>
         </div>
 
         {/* Share button */}
         <button
           onClick={shareNative}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors"
+          style={{ background: '#15f3ec', color: '#0a0a0f' }}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />

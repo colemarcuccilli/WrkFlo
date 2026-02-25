@@ -54,20 +54,20 @@ export default function MobileCommentSheet({
       />
 
       {/* Bottom sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl md:hidden p-5 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl md:hidden p-5 pb-safe" style={{ background: 'rgba(10,10,15,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none' }}>
         {/* Handle */}
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+        <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: 'rgba(255,255,255,0.08)' }} />
 
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Add Comment</h3>
+            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>Add Comment</h3>
             {isTimebased && pinTimestamp !== null && (
-              <p className="text-xs text-orange-600 mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: '#15f3ec' }}>
                 Pinned at <span className="font-mono font-bold">{formatTime(pinTimestamp)}</span>
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.4)' }}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -81,20 +81,23 @@ export default function MobileCommentSheet({
           disabled={disabled}
           rows={4}
           autoFocus
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400 resize-none"
+          className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-none"
+          style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.9)' }}
         />
 
         <div className="flex gap-3 mt-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors"
+            style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={disabled || !text.trim()}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 disabled:opacity-50 text-sm font-medium rounded-xl transition-colors"
+            style={{ background: '#15f3ec', color: '#0a0a0f' }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

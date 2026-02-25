@@ -26,7 +26,7 @@ export default function FileUploader({ projectId, onUploadComplete }) {
 
   const uploadFile = useCallback(async (file) => {
     const id = `${Date.now()}-${file.name}`;
-    
+
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
       setUploads((prev) => [...prev, { id, name: file.name, progress: 0, status: 'error', error: `File too large (max ${MAX_SIZE_MB}MB)` }]);
       return;
@@ -63,7 +63,7 @@ export default function FileUploader({ projectId, onUploadComplete }) {
       }
 
       const fileRecord = await res.json();
-      
+
       setUploads((prev) =>
         prev.map((u) =>
           u.id === id ? { ...u, progress: 100, status: 'done' } : u
@@ -115,26 +115,27 @@ export default function FileUploader({ projectId, onUploadComplete }) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
+        className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200"
+        style={
           isDragging
-            ? 'border-orange-500 bg-orange-50 scale-[1.01]'
-            : 'border-gray-200 bg-gray-50 hover:border-orange-300 hover:bg-orange-50/50'
-        }`}
+            ? { borderColor: '#15f3ec', background: 'rgba(21,243,236,0.08)', transform: 'scale(1.01)' }
+            : { borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }
+        }
       >
-        <div className={`w-10 h-10 rounded-full mx-auto mb-3 flex items-center justify-center transition-colors ${
-          isDragging ? 'bg-orange-100' : 'bg-gray-100'
-        }`}>
-          <svg className={`w-5 h-5 transition-colors ${isDragging ? 'text-orange-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-10 h-10 rounded-full mx-auto mb-3 flex items-center justify-center transition-colors" style={
+          isDragging ? { background: 'rgba(21,243,236,0.12)' } : { background: 'rgba(255,255,255,0.06)' }
+        }>
+          <svg className="w-5 h-5 transition-colors" style={isDragging ? { color: '#15f3ec' } : { color: 'rgba(255,255,255,0.4)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
         </div>
-        <p className={`text-sm font-medium transition-colors ${isDragging ? 'text-orange-700' : 'text-gray-700'}`}>
+        <p className="text-sm font-medium transition-colors" style={isDragging ? { color: '#15f3ec' } : { color: 'rgba(255,255,255,0.7)' }}>
           {isDragging ? 'Drop to upload' : 'Drag & drop files here'}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
-          or <span className="text-orange-500 font-medium">browse files</span>
+        <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          or <span className="font-medium" style={{ color: '#15f3ec' }}>browse files</span>
         </p>
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
           Video · Audio · Images · PDF · Max {MAX_SIZE_MB}MB
         </p>
         <input
@@ -154,31 +155,32 @@ export default function FileUploader({ projectId, onUploadComplete }) {
             <div className="flex justify-end">
               <button
                 onClick={clearDone}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: 'rgba(255,255,255,0.4)' }}
               >
                 Clear completed
               </button>
             </div>
           )}
           {uploads.map((upload) => (
-            <div key={upload.id} className="bg-white border border-gray-200 rounded-lg p-3">
+            <div key={upload.id} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="flex items-center gap-3 mb-1.5">
                 <div className="flex-shrink-0">
                   {upload.status === 'done' ? (
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(22,255,192,0.12)' }}>
+                      <svg className="w-3.5 h-3.5" style={{ color: '#16ffc0' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                   ) : upload.status === 'error' ? (
-                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,80,80,0.12)' }}>
+                      <svg className="w-3.5 h-3.5" style={{ color: 'rgba(255,80,80,0.9)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-orange-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(21,243,236,0.12)' }}>
+                      <svg className="w-3.5 h-3.5 animate-spin" style={{ color: '#15f3ec' }} fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
@@ -186,23 +188,23 @@ export default function FileUploader({ projectId, onUploadComplete }) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900 truncate">{upload.name}</p>
+                  <p className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.9)' }}>{upload.name}</p>
                   {upload.status === 'error' && (
-                    <p className="text-xs text-red-500 mt-0.5">{upload.error}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,80,80,0.9)' }}>{upload.error}</p>
                   )}
                   {upload.status === 'done' && (
-                    <p className="text-xs text-emerald-600 mt-0.5">Upload complete</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#16ffc0' }}>Upload complete</p>
                   )}
                 </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">
+                <span className="text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   {upload.status === 'uploading' ? `${upload.progress}%` : ''}
                 </span>
               </div>
               {upload.status === 'uploading' && (
-                <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
+                <div className="w-full rounded-full h-1 overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                   <div
-                    className="h-full bg-orange-500 rounded-full transition-all duration-200"
-                    style={{ width: `${upload.progress}%` }}
+                    className="h-full rounded-full transition-all duration-200"
+                    style={{ width: `${upload.progress}%`, background: '#15f3ec' }}
                   />
                 </div>
               )}

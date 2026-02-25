@@ -1,106 +1,220 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/components/AuthProvider';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// ── Icons (inline SVGs, no external deps) ────────────────────────────────────
+gsap.registerPlugin(ScrollTrigger);
 
-function FlameIcon({ className }: { className?: string }) {
+// ── Brand Colors ──────────────────────────────────────────────────────────────
+const CYAN = '#15f3ec';
+const BLUE = '#5bc7f9';
+const MINT = '#16ffc0';
+
+const PATH_COLORS = [CYAN, BLUE, MINT, CYAN, BLUE, MINT, CYAN, BLUE, MINT, CYAN];
+
+// ── WrkFlo SVG Logo ───────────────────────────────────────────────────────────
+function WrkFloLogo({
+  logoRef,
+  size = 'hero',
+}: {
+  logoRef?: React.Ref<SVGSVGElement>;
+  size?: 'hero' | 'footer';
+}) {
+  const strokeW = size === 'hero' ? 14 : 10;
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C12 2 9 7 9 10c0 1.657 1.343 3 3 3s3-1.343 3-3c0-.88-.3-1.7-.8-2.35C15.1 9.1 16 10.9 16 13c0 2.21-1.79 4-4 4s-4-1.79-4-4c0-3.5 4-11 4-11z" />
+    <svg
+      ref={logoRef}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 800 300"
+      width="100%"
+      height="100%"
+      style={{ display: 'block' }}
+    >
+      <path fill="none" stroke={PATH_COLORS[0]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 180,135 L 210,203 L 240,135 L 270,203 L 300,135" />
+      <path fill="none" stroke={PATH_COLORS[1]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 320,135 L 320,215" />
+      <path fill="none" stroke={PATH_COLORS[2]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 320,175 C 320,145 340,135 365,135" />
+      <path fill="none" stroke={PATH_COLORS[3]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 390,85 L 390,215" />
+      <path fill="none" stroke={PATH_COLORS[4]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 430,135 L 390,175" />
+      <path fill="none" stroke={PATH_COLORS[5]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 405,160 L 440,215" />
+      <path fill="none" stroke={PATH_COLORS[6]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 470,215 L 470,115 C 470,95 480,85 500,85" />
+      <path fill="none" stroke={PATH_COLORS[7]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 455,135 L 490,135" />
+      <path fill="none" stroke={PATH_COLORS[8]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 520,85 L 520,215" />
+      <path fill="none" stroke={PATH_COLORS[9]} strokeWidth={strokeW} strokeLinecap="butt" strokeLinejoin="miter" d="M 606,206 A 40 40 0 1 1 620,175" />
+      <polygon fill={MINT} points="604,174 636,174 620,198" />
     </svg>
   );
 }
 
-function UploadIcon({ className }: { className?: string }) {
+// ── Inline Icons ──────────────────────────────────────────────────────────────
+function IconZap() {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={32} height={32}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+function IconSync() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={32} height={32}>
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+    </svg>
+  );
+}
+function IconFile() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={32} height={32}>
+      <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+      <polyline points="13 2 13 9 20 9" />
+    </svg>
+  );
+}
+function IconUpload() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={48} height={48}>
       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
       <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
   );
 }
-
-function LinkIcon({ className }: { className?: string }) {
+function IconLink() {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={48} height={48}>
       <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
       <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
     </svg>
   );
 }
-
-function CheckCircleIcon({ className }: { className?: string }) {
+function IconCheck() {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={48} height={48}>
       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
   );
 }
-
-function ZapIcon({ className }: { className?: string }) {
+function IconCheckmark() {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    <svg className="success-check" viewBox="0 0 52 52" fill="none" width={64} height={64}>
+      <circle cx="26" cy="26" r="25" stroke={MINT} strokeWidth="2" />
+      <path className="check-path" stroke={MINT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16" />
     </svg>
   );
 }
 
-function MessageSquareIcon({ className }: { className?: string }) {
+// ── Floating Orbs ─────────────────────────────────────────────────────────────
+function FloatingOrbs() {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
-      <polyline points="13 2 13 9 20 9" />
-    </svg>
-  );
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function LockIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0110 0v4" />
-    </svg>
-  );
-}
-
-function HeartIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-    </svg>
+    <div className="orbs-container" aria-hidden="true">
+      <div className="orb orb-1" />
+      <div className="orb orb-2" />
+      <div className="orb orb-3" />
+      <div className="orb orb-4" />
+      <div className="orb orb-5" />
+    </div>
   );
 }
 
 // ── Main Landing Page ─────────────────────────────────────────────────────────
+export default function AnimatedLandingPage() {
+  const logoRef = useRef<SVGSVGElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+  const sublineRef = useRef<HTMLParagraphElement>(null);
+  const ctasRef = useRef<HTMLDivElement>(null);
+  const scrollArrowRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLElement>(null);
+  const howRef = useRef<HTMLElement>(null);
+  const compareRef = useRef<HTMLElement>(null);
+  const waitlistRef = useRef<HTMLElement>(null);
 
-export default function LandingPage() {
-  const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+
+  // ── Logo draw-on + hero entrance animations ────────────────────────────────
+  useEffect(() => {
+    const svg = logoRef.current;
+    if (!svg) return;
+
+    const paths = svg.querySelectorAll('path');
+    const polygons = svg.querySelectorAll('polygon');
+
+    paths.forEach((path) => {
+      const length = (path as SVGPathElement).getTotalLength?.() || 100;
+      gsap.set(path, { strokeDasharray: length, strokeDashoffset: length, opacity: 1 });
+    });
+    polygons.forEach((poly) => {
+      gsap.set(poly, { opacity: 0, scale: 0, transformOrigin: 'center' });
+    });
+
+    gsap.set([headlineRef.current, sublineRef.current, ctasRef.current, scrollArrowRef.current], {
+      opacity: 0, y: 30,
+    });
+
+    const tl = gsap.timeline();
+
+    tl.to(paths, {
+      strokeDashoffset: 0, duration: 0.4, stagger: 0.15, ease: 'power2.inOut',
+    });
+    tl.to(polygons, {
+      opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.7)',
+    }, '-=0.1');
+    tl.to(headlineRef.current, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.1');
+    tl.to(sublineRef.current, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, '-=0.4');
+    tl.to(ctasRef.current, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, '-=0.3');
+    tl.to(scrollArrowRef.current, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' }, '-=0.2');
+
+    return () => { tl.kill(); };
+  }, []);
+
+  // ── ScrollTrigger animations ───────────────────────────────────────────────
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.feature-card',
+        { opacity: 0, y: 60 },
+        { opacity: 1, y: 0, stagger: 0.2, duration: 0.8, ease: 'power3.out',
+          scrollTrigger: { trigger: '.features-section', start: 'top 75%' } }
+      );
+      gsap.fromTo('.step-item',
+        { opacity: 0, x: -40 },
+        { opacity: 1, x: 0, stagger: 0.25, duration: 0.8, ease: 'power3.out',
+          scrollTrigger: { trigger: '.how-section', start: 'top 75%' } }
+      );
+      gsap.fromTo('.connector-line',
+        { scaleX: 0, transformOrigin: 'left center' },
+        { scaleX: 1, stagger: 0.3, duration: 0.8, ease: 'power2.inOut',
+          scrollTrigger: { trigger: '.how-section', start: 'top 65%' } }
+      );
+      document.querySelectorAll('.compare-row').forEach((row, i) => {
+        gsap.fromTo(row,
+          { opacity: 0, x: i % 2 === 0 ? -50 : 50 },
+          { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out',
+            scrollTrigger: { trigger: row, start: 'top 85%' } }
+        );
+      });
+      gsap.fromTo('.step-number',
+        { opacity: 0.1 },
+        { opacity: 1, stagger: 0.25, duration: 0.7, ease: 'power2.out',
+          scrollTrigger: { trigger: '.how-section', start: 'top 75%' } }
+      );
+      gsap.fromTo('.waitlist-content',
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+          scrollTrigger: { trigger: '.waitlist-section', start: 'top 75%' } }
+      );
+    });
+
+    return () => {
+      ctx.revert();
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    };
+  }, []);
 
   async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
@@ -113,414 +227,461 @@ export default function LandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      if (res.ok) {
-        setSubmitted(true);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+      if (res.ok) { setSubmitted(true); }
+      else { setError('Something went wrong. Please try again.'); }
+    } catch { setError('Something went wrong. Please try again.'); }
+    finally { setSubmitting(false); }
   }
 
+  const marqueeText = 'Video Editors · Motion Designers · Photographers · Music Producers · Podcast Creators · Small Studios · Indie Filmmakers · Animators · Sound Designers · Color Graders ·';
+
+  const compareRows = [
+    { feature: 'Client sign-up required', wrkflo: false, others: true },
+    { feature: 'No-account review links', wrkflo: true, others: false },
+    { feature: 'Free tier available', wrkflo: true, others: false },
+    { feature: 'Built for indie creators', wrkflo: true, others: false },
+    { feature: 'Timestamped comments', wrkflo: true, others: true },
+    { feature: 'Simple client accounts', wrkflo: true, others: true },
+    { feature: 'Affordable pricing', wrkflo: true, others: false },
+    { feature: 'Real-time collaboration', wrkflo: true, others: true },
+  ];
+
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div style={{ background: '#0a0a0f', color: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
+
       {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-600">
-              <FlameIcon className="h-5 w-5 text-white" />
-            </div>
-            <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-              WrkFlo
-            </span>
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(10,10,15,0.85)', backdropFilter: 'blur(16px)',
+        borderBottom: `1px solid rgba(21,243,236,0.1)`, padding: '0 24px',
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+          <div style={{ width: 180, display: 'flex', alignItems: 'center' }}>
+            <WrkFloLogo size="footer" />
           </div>
-          <div className="hidden items-center gap-6 text-sm font-medium text-gray-600 sm:flex">
-            <a href="#features" className="hover:text-orange-600 transition-colors">Features</a>
-            <a href="#compare" className="hover:text-orange-600 transition-colors">Compare</a>
-            <a href="#waitlist" className="hover:text-orange-600 transition-colors">Early Access</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.6)' }}>
+            <a href="#features" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = CYAN)}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}>
+              Features
+            </a>
+            <a href="#compare" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = CYAN)}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}>
+              Compare
+            </a>
+            <a href="#waitlist" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = CYAN)}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}>
+              Early Access
+            </a>
           </div>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-orange-400 hover:text-orange-600 transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700">
-                  {user.user_metadata?.full_name?.[0] || user.email?.[0]?.toUpperCase() || '?'}
-                </div>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-orange-400 hover:text-orange-600 transition-colors"
-                >
-                  Login
-                </Link>
-                <a
-                  href="#waitlist"
-                  className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-500 transition-colors"
-                >
-                  Get Early Access
-                </a>
-              </>
-            )}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Link href="/login" style={{
+              padding: '8px 20px', borderRadius: 8, border: `1px solid rgba(21,243,236,0.3)`,
+              color: CYAN, textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(21,243,236,0.08)'; e.currentTarget.style.borderColor = CYAN; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(21,243,236,0.3)'; }}>
+              Login
+            </Link>
+            <a href="#waitlist" style={{
+              padding: '8px 20px', borderRadius: 8,
+              background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+              color: '#0a0a0f', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+              transition: 'all 0.2s', boxShadow: `0 0 20px rgba(21,243,236,0.3)`,
+            }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 0 32px rgba(21,243,236,0.55)`; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 20px rgba(21,243,236,0.3)`; e.currentTarget.style.transform = 'translateY(0)'; }}>
+              Get Early Access
+            </a>
           </div>
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-white px-4 pb-24 pt-20 text-center">
-        {/* Subtle animated fire gradient blob */}
-        <div
-          className="pointer-events-none absolute inset-0 -z-10"
-          aria-hidden="true"
-        >
-          <div className="fire-blob absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/4 rounded-full opacity-[0.07] blur-3xl" />
+      {/* ── Section 1: Hero ── */}
+      <section ref={heroRef} style={{
+        minHeight: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        position: 'relative', overflow: 'hidden',
+        padding: '80px 24px 120px', background: '#0a0a0f',
+      }}>
+        <FloatingOrbs />
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: `radial-gradient(ellipse 70% 50% at 50% 40%, rgba(21,243,236,0.06) 0%, transparent 70%)`,
+        }} />
+        <div style={{ width: '100%', maxWidth: 700, marginBottom: 48 }}>
+          <WrkFloLogo logoRef={logoRef} size="hero" />
         </div>
+        <h1 ref={headlineRef} style={{
+          fontSize: 'clamp(2.4rem, 5vw, 4.2rem)',
+          fontWeight: 900, lineHeight: 1.08, letterSpacing: '-0.03em',
+          textAlign: 'center', marginBottom: 20,
+          background: `linear-gradient(135deg, #fff 30%, ${CYAN} 70%, ${MINT} 100%)`,
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        }}>
+          Creative Review, Reimagined.
+        </h1>
+        <p ref={sublineRef} style={{
+          fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+          color: 'rgba(255,255,255,0.6)', textAlign: 'center', maxWidth: 520,
+          marginBottom: 44, lineHeight: 1.65,
+        }}>
+          Share files. Get feedback. Ship faster.<br />
+          The creative review platform built for indie creators and small studios.
+        </p>
+        <div ref={ctasRef} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a href="#waitlist" style={{
+            padding: '14px 32px', borderRadius: 10,
+            background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+            color: '#0a0a0f', fontSize: 16, fontWeight: 700, textDecoration: 'none',
+            boxShadow: `0 0 30px rgba(21,243,236,0.35)`, transition: 'all 0.25s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 0 50px rgba(21,243,236,0.6)`; e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 30px rgba(21,243,236,0.35)`; e.currentTarget.style.transform = 'translateY(0) scale(1)'; }}>
+            Get Early Access
+          </a>
+          <Link href="/dashboard" style={{
+            padding: '14px 32px', borderRadius: 10,
+            border: `1px solid rgba(255,255,255,0.15)`,
+            color: 'rgba(255,255,255,0.8)', fontSize: 16, fontWeight: 600, textDecoration: 'none',
+            transition: 'all 0.25s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; e.currentTarget.style.background = 'transparent'; }}>
+            Enter Dashboard &rarr;
+          </Link>
+        </div>
+        <div ref={scrollArrowRef} className="scroll-bounce" style={{
+          position: 'absolute', bottom: 36, left: '50%', transform: 'translateX(-50%)',
+          color: 'rgba(21,243,236,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase',
+        }}>
+          <span style={{ fontSize: 10 }}>Scroll</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </div>
+      </section>
 
-        <div className="mx-auto max-w-3xl">
-          {/* Logo mark */}
-          <div className="mb-6 flex justify-center">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/30">
-                <FlameIcon className="h-7 w-7 text-white" />
+      {/* ── Section 2: Features ── */}
+      <section id="features" ref={featuresRef} className="features-section" style={{
+        padding: '100px 24px', background: '#0d0d18', position: 'relative',
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <p style={{ color: CYAN, fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 12 }}>
+              Features
+            </p>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              Everything you need to{' '}
+              <span style={{ color: MINT }}>move fast</span>
+            </h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+            {[
+              { icon: <IconZap />, color: CYAN, title: 'Zero-Friction Review', desc: 'Clients click your link and review instantly. No account, no app download, no friction. Faster approvals, happier clients.' },
+              { icon: <IconSync />, color: BLUE, title: 'Real-Time Sync', desc: 'Comments sync live between you and your client. Timestamped feedback pins to exact moments. No more email chains.' },
+              { icon: <IconFile />, color: MINT, title: 'All Creative File Types', desc: 'Video, audio, images, PDFs, design files — WrkFlo handles every format your creative workflow demands.' },
+            ].map(({ icon, color, title, desc }) => (
+              <div key={title} className="feature-card" style={{
+                background: 'rgba(255,255,255,0.02)', border: `1px solid rgba(255,255,255,0.06)`,
+                borderRadius: 16, padding: 36, transition: 'all 0.3s', position: 'relative', overflow: 'hidden',
+              }}
+                onMouseEnter={e => { const el = e.currentTarget; el.style.border = `1px solid ${color}40`; el.style.boxShadow = `0 0 30px ${color}15, inset 0 0 30px ${color}05`; el.style.transform = 'translateY(-4px)'; }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.border = '1px solid rgba(255,255,255,0.06)'; el.style.boxShadow = 'none'; el.style.transform = 'translateY(0)'; }}
+              >
+                <div style={{ color, marginBottom: 20 }}>{icon}</div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: 12 }}>{title}</h3>
+                <p style={{ color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, fontSize: 15 }}>{desc}</p>
               </div>
-              <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">
-                WrkFlo
-              </span>
-            </div>
-          </div>
-
-          <h1 className="mb-5 text-5xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-6xl">
-            Creative Review,{' '}
-            <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-              Without the Chaos
-            </span>
-          </h1>
-
-          <p className="mx-auto mb-8 max-w-xl text-lg text-gray-600">
-            WrkFlo is the Frame.io alternative built for indie creators and small studios.
-            Share a review link, get client feedback instantly — no account required, no back-and-forth.
-          </p>
-
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <a
-              href="#waitlist"
-              className="flex items-center gap-2 rounded-lg bg-orange-600 px-7 py-3.5 text-base font-semibold text-white shadow-md shadow-orange-500/25 hover:bg-orange-500 transition-all hover:shadow-lg hover:shadow-orange-500/30"
-            >
-              <FlameIcon className="h-4 w-4" />
-              Get Early Access
-            </a>
-            <a
-              href="#how-it-works"
-              className="rounded-lg border border-gray-300 px-7 py-3.5 text-base font-semibold text-gray-700 hover:border-orange-400 hover:text-orange-600 transition-colors"
-            >
-              See How It Works
-            </a>
-          </div>
-
-          {/* Social proof pill */}
-          <div className="mt-10 flex justify-center">
-            <div className="flex items-center gap-2 rounded-full border border-gray-100 bg-gray-50 px-4 py-2 text-sm text-gray-500 shadow-sm">
-              <span className="text-orange-500">🔥</span>
-              <span>Join 500+ creators on the early access list</span>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Trust Bar ── */}
-      <section className="border-y border-gray-100 bg-gray-50 px-4 py-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="mb-5 text-sm font-medium uppercase tracking-widest text-gray-400">
-            Trusted by indie creators, video editors, photographers, and studios
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-gray-600">
-            <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
-              <span>🎬</span> Video Editors
-            </span>
-            <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
-              <span>📸</span> Photographers
-            </span>
-            <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
-              <span>🎵</span> Music Producers
-            </span>
-            <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
-              <span>🎨</span> Motion Designers
-            </span>
-            <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
-              <span>🏢</span> Small Studios
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works ── */}
-      <section id="how-it-works" className="bg-white px-4 py-20">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-orange-600">How It Works</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+      {/* ── Section 3: How It Works ── */}
+      <section id="how-it-works" ref={howRef} className="how-section" style={{
+        padding: '100px 24px', background: '#050508',
+      }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 72 }}>
+            <p style={{ color: MINT, fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 12 }}>
+              How It Works
+            </p>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>
               Approvals in 3 simple steps
             </h2>
           </div>
-
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, position: 'relative', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
-              {
-                step: '01',
-                icon: <UploadIcon className="h-6 w-6" />,
-                title: 'Upload your files',
-                desc: 'Drop in videos, images, audio, PDFs, or design files — WrkFlo handles any format your clients need to review.',
-              },
-              {
-                step: '02',
-                icon: <LinkIcon className="h-6 w-6" />,
-                title: 'Share a review link',
-                desc: 'Send one link to your client. No account, no login, no friction — they click and review instantly.',
-              },
-              {
-                step: '03',
-                icon: <CheckCircleIcon className="h-6 w-6" />,
-                title: 'Get approvals fast',
-                desc: 'Clients leave timestamped comments and approve directly in WrkFlo — all feedback in one place, never in email.',
-              },
-            ].map(({ step, icon, title, desc }) => (
-              <div
-                key={step}
-                className="group relative rounded-2xl border border-gray-100 bg-white p-7 shadow-sm transition-all hover:shadow-md"
-              >
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-50 to-red-50 text-orange-500 ring-1 ring-orange-100 group-hover:from-orange-100 group-hover:to-red-100 transition-colors">
-                    {icon}
-                  </div>
-                  <span className="text-3xl font-extrabold text-gray-100">{step}</span>
+              { num: '01', icon: <IconUpload />, color: CYAN, title: 'Upload', desc: 'Drop in any creative file — video, audio, images, PDFs, or design files.' },
+              { num: '02', icon: <IconLink />, color: BLUE, title: 'Share Link', desc: 'Send one magic link to your client. They click, they review. No account needed.' },
+              { num: '03', icon: <IconCheck />, color: MINT, title: 'Approve', desc: 'Client leaves timestamped comments and approves right in WrkFlo. Done.' },
+            ].map(({ num, icon, color, title, desc }, i) => (
+              <div key={num} style={{ display: 'flex', alignItems: 'center', flex: '1 1 280px' }}>
+                <div className="step-item" style={{ flex: 1, textAlign: 'center', padding: '0 24px', position: 'relative' }}>
+                  <div className="step-number" style={{
+                    fontSize: 80, fontWeight: 900, lineHeight: 1, color: 'transparent',
+                    WebkitTextStroke: `2px ${color}`, marginBottom: 16, fontVariantNumeric: 'tabular-nums',
+                  }}>{num}</div>
+                  <div style={{ color, marginBottom: 16, display: 'flex', justifyContent: 'center' }}>{icon}</div>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 10 }}>{title}</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.7 }}>{desc}</p>
                 </div>
-                <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{desc}</p>
+                {i < 2 && (
+                  <div className="connector-line" style={{
+                    width: 60, height: 2,
+                    background: `linear-gradient(to right, ${i === 0 ? CYAN : BLUE}, ${i === 0 ? BLUE : MINT})`,
+                    flexShrink: 0, borderRadius: 2, boxShadow: `0 0 8px ${i === 0 ? CYAN : BLUE}80`,
+                  }} />
+                )}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Features ── */}
-      <section id="features" className="bg-gray-50 px-4 py-20">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-orange-600">Features</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Everything you need, nothing you don&apos;t
+      {/* ── Section 4: Comparison ── */}
+      <section id="compare" ref={compareRef} style={{
+        padding: '100px 24px', background: '#0d0d18',
+      }}>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <p style={{ color: BLUE, fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 12 }}>
+              Compare
+            </p>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>
+              WrkFlo vs Competitors
             </h2>
-            <p className="mt-3 text-gray-600">Built for the way indie creators actually work — not for enterprise teams with IT departments.</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: 12, fontSize: 15 }}>
+              Enterprise tools were built for big teams. WrkFlo was built for you.
+            </p>
           </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: <ZapIcon className="h-5 w-5" />,
-                title: 'No Client Sign-Up',
-                desc: 'Clients click your link and review instantly. Zero friction means faster approvals and happier clients.',
-              },
-              {
-                icon: <MessageSquareIcon className="h-5 w-5" />,
-                title: 'Real-Time Feedback',
-                desc: 'Comments sync live between you and your client. No more email chains or version confusion.',
-              },
-              {
-                icon: <FileIcon className="h-5 w-5" />,
-                title: 'All File Types',
-                desc: 'Video, audio, images, PDFs, design files — WrkFlo handles every format your creative workflow demands.',
-              },
-              {
-                icon: <ClockIcon className="h-5 w-5" />,
-                title: 'Timestamped Comments',
-                desc: 'Pin feedback to exact moments in video or audio. Clients say "fix at 0:42" instead of vague descriptions.',
-              },
-              {
-                icon: <LockIcon className="h-5 w-5" />,
-                title: 'Password-Protected Links',
-                desc: 'Share work securely with password protection. Keep sensitive projects private without complicating the workflow.',
-              },
-              {
-                icon: <HeartIcon className="h-5 w-5" />,
-                title: 'Built for Indie Creators',
-                desc: 'Affordable, simple, and focused on what solo creators and small studios actually need — not enterprise bloat.',
-              },
-            ].map(({ icon, title, desc }) => (
-              <div
-                key={title}
-                className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md"
-              >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-500 ring-1 ring-orange-100 group-hover:bg-orange-100 transition-colors">
-                  {icon}
-                </div>
-                <h3 className="mb-2 text-base font-bold text-gray-900">{title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{desc}</p>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 120px 120px',
+            padding: '14px 24px', marginBottom: 8,
+            borderBottom: `1px solid rgba(255,255,255,0.06)`,
+          }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Feature</span>
+            <span style={{ textAlign: 'center', fontWeight: 700, color: CYAN, fontSize: 14 }}>WrkFlo</span>
+            <span style={{ textAlign: 'center', fontWeight: 600, color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Others</span>
+          </div>
+          {compareRows.map(({ feature, wrkflo, others }, i) => (
+            <div key={feature} className="compare-row" style={{
+              display: 'grid', gridTemplateColumns: '1fr 120px 120px',
+              padding: '16px 24px', background: i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent',
+              borderRadius: 8, borderLeft: wrkflo && !others ? `2px solid ${CYAN}30` : '2px solid transparent',
+              alignItems: 'center',
+            }}>
+              <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)' }}>{feature}</span>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {wrkflo ? (
+                  <span style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: `rgba(22,255,192,0.12)`, border: `1px solid ${MINT}40`,
+                    color: MINT, fontSize: 13, fontWeight: 700,
+                  }}>&#10003;</span>
+                ) : (
+                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 18 }}>&mdash;</span>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Comparison Table ── */}
-      <section id="compare" className="bg-white px-4 py-20">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-12 text-center">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-orange-600">Compare</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              WrkFlo vs Frame.io
-            </h2>
-            <p className="mt-3 text-gray-600">Frame.io was built for Hollywood studios. WrkFlo was built for you.</p>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="px-6 py-4 font-semibold text-gray-700">Feature</th>
-                  <th className="px-6 py-4 text-center font-bold text-orange-600">
-                    <span className="flex items-center justify-center gap-1.5">
-                      <FlameIcon className="h-4 w-4" /> WrkFlo
-                    </span>
-                  </th>
-                  <th className="px-6 py-4 text-center font-semibold text-gray-500">Frame.io</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 bg-white">
-                {[
-                  { feature: 'Client sign-up required', wrkflo: '✅ No', frameio: '❌ Yes' },
-                  { feature: 'Free tier', wrkflo: '✅ Yes', frameio: '⚠️ Limited' },
-                  { feature: 'No-account review links', wrkflo: '✅ Yes', frameio: '❌ No' },
-                  { feature: 'Built for indie creators', wrkflo: '✅ Yes', frameio: '❌ Enterprise-focused' },
-                  { feature: 'Timestamped comments', wrkflo: '✅ Yes', frameio: '✅ Yes' },
-                  { feature: 'Password-protected links', wrkflo: '✅ Yes', frameio: '✅ Yes' },
-                  { feature: 'Affordable pricing', wrkflo: '✅ Yes', frameio: '❌ Premium' },
-                ].map(({ feature, wrkflo, frameio }, i) => (
-                  <tr
-                    key={feature}
-                    className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
-                  >
-                    <td className="px-6 py-4 font-medium text-gray-700">{feature}</td>
-                    <td className="px-6 py-4 text-center font-medium text-gray-900">{wrkflo}</td>
-                    <td className="px-6 py-4 text-center text-gray-500">{frameio}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Waitlist / Early Access ── */}
-      <section id="waitlist" className="bg-gradient-to-br from-orange-50 to-red-50 px-4 py-20">
-        <div className="mx-auto max-w-xl text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/30">
-              <FlameIcon className="h-6 w-6 text-white" />
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {others ? (
+                  <span style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 700,
+                  }}>&#10003;</span>
+                ) : (
+                  <span style={{ color: 'rgba(255,80,80,0.5)', fontSize: 18 }}>&#10005;</span>
+                )}
+              </div>
             </div>
-          </div>
-          <h2 className="mb-3 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Join the Early Access List
-          </h2>
-          <p className="mb-8 text-gray-600">
-            WrkFlo is currently in private beta. Sign up to get notified when we launch and{' '}
-            <strong className="text-orange-600">get 3 months free</strong> as a founding creator.
-          </p>
+          ))}
+        </div>
+      </section>
 
+      {/* ── Section 5: Marquee ── */}
+      <section style={{ padding: '64px 0', background: '#0a0a0f', overflow: 'hidden' }}>
+        <div style={{ marginBottom: 20 }}>
+          <div className="marquee-track" style={{ display: 'flex', gap: 0, whiteSpace: 'nowrap' }}>
+            {[0, 1].map(i => (
+              <span key={i} style={{ color: `${CYAN}70`, fontSize: 15, fontWeight: 600, letterSpacing: '0.04em', paddingRight: 40, flexShrink: 0 }}>
+                {marqueeText}&nbsp;&nbsp;&nbsp;&nbsp;
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="marquee-track-reverse" style={{ display: 'flex', gap: 0, whiteSpace: 'nowrap' }}>
+            {[0, 1].map(i => (
+              <span key={i} style={{ color: `${MINT}60`, fontSize: 15, fontWeight: 600, letterSpacing: '0.04em', paddingRight: 40, flexShrink: 0 }}>
+                {marqueeText}&nbsp;&nbsp;&nbsp;&nbsp;
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Section 6: Waitlist CTA ── */}
+      <section id="waitlist" ref={waitlistRef} className="waitlist-section" style={{
+        padding: '120px 24px', position: 'relative', overflow: 'hidden',
+      }}>
+        <div aria-hidden="true" className="waitlist-bg" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
+        <div className="waitlist-content" style={{
+          maxWidth: 560, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1,
+        }}>
+          <h2 style={{
+            fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16,
+          }}>
+            You&rsquo;re Early.{' '}
+            <span style={{
+              background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>That&rsquo;s Good.</span>
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 17, lineHeight: 1.65, marginBottom: 48 }}>
+            Join the waitlist. Get 3 months free when we launch.
+          </p>
           {submitted ? (
-            <div className="rounded-2xl border border-orange-200 bg-white px-8 py-8 shadow-sm">
-              <div className="mb-3 text-4xl">🔥</div>
-              <h3 className="mb-2 text-xl font-bold text-gray-900">You&apos;re on the list!</h3>
-              <p className="text-gray-600">We&apos;ll be in touch when WrkFlo launches. Get ready to move fast.</p>
+            <div style={{
+              background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)',
+              border: `1px solid ${MINT}30`, borderRadius: 20, padding: '48px 32px',
+            }}>
+              <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}><IconCheckmark /></div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 10, color: MINT }}>You&rsquo;re on the list</h3>
+              <p style={{ color: 'rgba(255,255,255,0.5)' }}>We&rsquo;ll reach out when WrkFlo launches. Get ready to move fast.</p>
             </div>
           ) : (
-            <form onSubmit={handleWaitlist} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="flex-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-colors"
+            <form onSubmit={handleWaitlist} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="your@email.com" style={{
+                    flex: '1 1 260px', minWidth: 0, padding: '16px 20px', borderRadius: 10,
+                    background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)',
+                    border: `1px solid rgba(21,243,236,0.25)`, color: '#fff', fontSize: 15, outline: 'none',
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                  }}
+                  onFocus={e => { e.currentTarget.style.borderColor = CYAN; e.currentTarget.style.boxShadow = `0 0 0 3px rgba(21,243,236,0.15)`; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = 'rgba(21,243,236,0.25)'; e.currentTarget.style.boxShadow = 'none'; }}
                 />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white shadow-md shadow-orange-500/25 hover:bg-orange-500 transition-all disabled:opacity-60"
-                >
-                  {submitting ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Joining...
-                    </span>
-                  ) : (
-                    <>
-                      <FlameIcon className="h-4 w-4" />
-                      Get Early Access
-                    </>
-                  )}
+                <button type="submit" disabled={submitting} style={{
+                  padding: '16px 32px', borderRadius: 10, border: 'none', cursor: submitting ? 'not-allowed' : 'pointer',
+                  background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+                  color: '#0a0a0f', fontWeight: 700, fontSize: 15,
+                  boxShadow: `0 0 24px rgba(21,243,236,0.35)`, transition: 'all 0.25s', opacity: submitting ? 0.7 : 1,
+                }}
+                  onMouseEnter={e => { if (!submitting) { e.currentTarget.style.boxShadow = `0 0 40px rgba(21,243,236,0.6)`; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 24px rgba(21,243,236,0.35)`; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                  {submitting ? 'Joining...' : 'Join Waitlist'}
                 </button>
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <p className="text-xs text-gray-400">No spam. Unsubscribe anytime. We&apos;ll only email you about WrkFlo.</p>
+              {error && <p style={{ color: '#ff6b6b', fontSize: 13 }}>{error}</p>}
+              <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>No spam. Unsubscribe anytime.</p>
             </form>
           )}
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-gray-100 bg-white px-4 py-10">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-col items-center gap-2 sm:items-start">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-600">
-                  <FlameIcon className="h-4 w-4 text-white" />
-                </div>
-                <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-lg font-bold text-transparent">
-                  WrkFlo
-                </span>
-              </div>
-              <p className="text-xs text-gray-400">Creative review, without the agency markup.</p>
+      {/* ── Section 7: Footer ── */}
+      <footer style={{
+        padding: '48px 24px 32px', background: '#050508',
+        borderTop: `1px solid rgba(21,243,236,0.08)`, boxShadow: `0 -1px 0 ${CYAN}15`,
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
+            <div>
+              <div style={{ width: 200, marginBottom: 12 }}><WrkFloLogo size="footer" /></div>
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Built for creators who move fast.</p>
             </div>
-
-            <nav className="flex flex-wrap justify-center gap-5 text-sm text-gray-500 sm:justify-end">
-              <Link href={user ? "/dashboard" : "/login"} className="hover:text-orange-600 transition-colors">{user ? 'Dashboard' : 'Login'}</Link>
-              <a href="#features" className="hover:text-orange-600 transition-colors">Features</a>
-              <a href="#" className="hover:text-orange-600 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-orange-600 transition-colors">Terms</a>
+            <nav style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Dashboard', href: '/dashboard' },
+                { label: 'Features', href: '#features' },
+                { label: 'Privacy', href: '#' },
+                { label: 'Terms', href: '#' },
+              ].map(({ label, href }) => (
+                <a key={label} href={href} style={{
+                  color: 'rgba(255,255,255,0.35)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.color = CYAN)}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}>
+                  {label}
+                </a>
+              ))}
             </nav>
           </div>
-
-          <div className="mt-6 border-t border-gray-50 pt-6 text-center text-xs text-gray-400">
-            © 2026 WrkFlo. Built for creators.
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 24,
+            display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+          }}>
+            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13 }}>&copy; 2026 WrkFlo. All rights reserved.</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 13 }}>Built for creators.</span>
           </div>
         </div>
       </footer>
 
-      {/* ── CSS ── */}
-      <style jsx>{`
-        @keyframes fire-pulse {
-          0%, 100% { transform: translateX(-50%) translateY(-25%) scale(1); opacity: 0.07; }
-          50% { transform: translateX(-50%) translateY(-28%) scale(1.08); opacity: 0.10; }
+      {/* ── Global Styles ── */}
+      <style jsx global>{`
+        @keyframes float-1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -40px) scale(1.05); }
+          66% { transform: translate(-20px, 20px) scale(0.97); }
         }
-        .fire-blob {
-          background: radial-gradient(ellipse, #f97316 0%, #ef4444 50%, #dc2626 100%);
-          animation: fire-pulse 6s ease-in-out infinite;
+        @keyframes float-2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-35px, 30px) scale(0.95); }
+          66% { transform: translate(25px, -25px) scale(1.04); }
         }
+        @keyframes float-3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(20px, 40px) scale(1.06); }
+        }
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        @keyframes marquee-reverse {
+          from { transform: translateX(-50%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes scroll-bounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50% { transform: translateX(-50%) translateY(8px); }
+        }
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 0.04; transform: scale(1); }
+          50% { opacity: 0.09; transform: scale(1.08); }
+        }
+        .orbs-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.12; }
+        .orb-1 { width: 500px; height: 500px; background: ${CYAN}; top: -150px; left: -150px; animation: float-1 18s ease-in-out infinite; }
+        .orb-2 { width: 400px; height: 400px; background: ${BLUE}; bottom: -100px; right: -100px; animation: float-2 22s ease-in-out infinite; }
+        .orb-3 { width: 350px; height: 350px; background: ${MINT}; top: 40%; left: 60%; animation: float-3 15s ease-in-out infinite; }
+        .orb-4 { width: 200px; height: 200px; background: ${CYAN}; top: 30%; left: 20%; animation: float-2 20s ease-in-out infinite reverse; opacity: 0.07; }
+        .orb-5 { width: 300px; height: 300px; background: ${BLUE}; top: 70%; left: 40%; animation: float-1 25s ease-in-out infinite reverse; opacity: 0.06; }
+        .scroll-bounce { animation: scroll-bounce 2s ease-in-out infinite; }
+        .marquee-track { display: inline-flex; animation: marquee 30s linear infinite; }
+        .marquee-track-reverse { display: inline-flex; animation: marquee-reverse 35s linear infinite; }
+        .waitlist-bg {
+          background: linear-gradient(135deg, rgba(21,243,236,0.06) 0%, rgba(91,199,249,0.06) 33%, rgba(22,255,192,0.06) 66%, rgba(21,243,236,0.06) 100%);
+          background-size: 400% 400%; animation: gradient-shift 10s ease infinite;
+        }
+        .success-check circle { stroke-dasharray: 157; stroke-dashoffset: 0; animation: draw-circle 0.6s ease-out forwards; }
+        .check-path { stroke-dasharray: 50; stroke-dashoffset: 50; animation: draw-check 0.4s 0.5s ease-out forwards; }
+        @keyframes draw-circle { from { stroke-dashoffset: 157; } to { stroke-dashoffset: 0; } }
+        @keyframes draw-check { to { stroke-dashoffset: 0; } }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
       `}</style>
     </div>
   );

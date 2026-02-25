@@ -3,10 +3,16 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const fallbackItems = [
-  { id: 1, type: 'comment', user: 'James Taylor', action: 'commented on', target: 'logo_primary.svg', time: '2 hours ago', color: 'text-orange-500' },
-  { id: 2, type: 'approve', user: 'Dana Lee', action: 'approved', target: 'instagram_post.png', time: '3 hours ago', color: 'text-emerald-500' },
-  { id: 3, type: 'upload', user: 'Sarah Chen', action: 'uploaded', target: 'business_card_mockup.png', time: '5 hours ago', color: 'text-orange-400' },
+  { id: 1, type: 'comment', user: 'James Taylor', action: 'commented on', target: 'logo_primary.svg', time: '2 hours ago', color: '' },
+  { id: 2, type: 'approve', user: 'Dana Lee', action: 'approved', target: 'instagram_post.png', time: '3 hours ago', color: '' },
+  { id: 3, type: 'upload', user: 'Sarah Chen', action: 'uploaded', target: 'business_card_mockup.png', time: '5 hours ago', color: '' },
 ];
+
+const fallbackColors = {
+  'comment': '#15f3ec',
+  'approve': '#16ffc0',
+  'upload': 'rgba(21,243,236,0.7)',
+};
 
 const typeIcon = (type) => {
   switch (type) {
@@ -64,38 +70,46 @@ export default function ActivityFeed({ activities: propActivities = null }) {
   const displayItems = activities || fallbackItems;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5">
+    <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+        <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>Recent Activity</h3>
         {loading && (
-          <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-3 h-3 rounded-full animate-spin" style={{ border: '1px solid #15f3ec', borderTopColor: 'transparent' }} />
         )}
       </div>
       <div className="space-y-3">
-        {displayItems.map((item) => (
-          <div key={item.id} className="flex items-start gap-3">
-            <div className={`mt-0.5 flex-shrink-0 ${item.color}`}>
-              {typeIcon(item.type)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-gray-900">{item.user}</span>
-                {' '}{item.action}{' '}
-                {item.projectId ? (
-                  <Link href={`/project/${item.projectId}`} className="text-orange-500 hover:text-orange-600 hover:underline">
-                    {item.target}
-                  </Link>
-                ) : (
-                  <span className="text-orange-500">{item.target}</span>
+        {displayItems.map((item) => {
+          const iconColor = item.color && item.color.includes('cyan')
+            ? '#15f3ec'
+            : item.color && item.color.includes('mint') || item.color && item.color.includes('emerald')
+            ? '#16ffc0'
+            : fallbackColors[item.type] || '#15f3ec';
+
+          return (
+            <div key={item.id} className="flex items-start gap-3">
+              <div className="mt-0.5 flex-shrink-0" style={{ color: iconColor }}>
+                {typeIcon(item.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  <span className="font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{item.user}</span>
+                  {' '}{item.action}{' '}
+                  {item.projectId ? (
+                    <Link href={`/project/${item.projectId}`} className="hover:underline" style={{ color: '#15f3ec' }}>
+                      {item.target}
+                    </Link>
+                  ) : (
+                    <span style={{ color: '#15f3ec' }}>{item.target}</span>
+                  )}
+                </p>
+                {item.projectName && (
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{item.projectName}</p>
                 )}
-              </p>
-              {item.projectName && (
-                <p className="text-xs text-gray-400 mt-0.5">{item.projectName}</p>
-              )}
-              <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{item.time}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

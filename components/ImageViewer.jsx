@@ -33,8 +33,8 @@ export default function ImageViewer({ file, comments, onAddComment }) {
       {/* Image container */}
       <div
         ref={containerRef}
-        className="relative bg-gray-100 rounded-lg overflow-hidden cursor-crosshair border border-gray-200"
-        style={{ minHeight: 400 }}
+        className="relative rounded-lg overflow-hidden cursor-crosshair"
+        style={{ minHeight: 400, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
         onClick={handleImageClick}
       >
         {file.url ? (
@@ -46,13 +46,13 @@ export default function ImageViewer({ file, comments, onAddComment }) {
             draggable={false}
           />
         ) : (
-          <div className="flex items-center justify-center h-64 text-gray-400">
+          <div className="flex items-center justify-center h-64" style={{ color: 'rgba(255,255,255,0.4)' }}>
             <div className="text-center">
-              <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-12 h-12 mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.15)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <p className="text-sm text-gray-600">{file.name}</p>
-              <p className="text-xs text-gray-400 mt-1">Preview not available</p>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{file.name}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Preview not available</p>
             </div>
           </div>
         )}
@@ -69,31 +69,35 @@ export default function ImageViewer({ file, comments, onAddComment }) {
               setPendingPin(null);
             }}
           >
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 cursor-pointer shadow-lg transition-all ${
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 cursor-pointer shadow-lg transition-all" style={
               activePin === c.id
-                ? 'bg-orange-500 border-white text-white scale-125'
+                ? { background: '#15f3ec', borderColor: 'white', color: '#0a0a0f', transform: 'scale(1.25)' }
                 : c.authorRole === 'client'
-                ? 'bg-orange-500 border-orange-200 text-white hover:scale-110'
-                : 'bg-gray-600 border-gray-300 text-white hover:scale-110'
-            }`}>
+                ? { background: '#15f3ec', borderColor: 'rgba(21,243,236,0.3)', color: '#0a0a0f' }
+                : { background: 'rgba(255,255,255,0.5)', borderColor: 'rgba(255,255,255,0.3)', color: '#0a0a0f' }
+            }>
               {idx + 1}
             </div>
 
             {/* Pin tooltip */}
             {activePin === c.id && (
               <div
-                className="absolute z-20 bg-white border border-gray-200 rounded-lg p-3 shadow-xl w-56"
-                style={{ left: '120%', top: '-8px' }}
+                className="absolute z-20 rounded-lg p-3 shadow-xl w-56"
+                style={{ left: '120%', top: '-8px', background: 'rgba(10,10,15,0.95)', border: '1px solid rgba(255,255,255,0.08)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-gray-900">{c.author}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${c.authorRole === 'client' ? 'bg-orange-50 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>{c.author}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded" style={
+                    c.authorRole === 'client'
+                      ? { background: 'rgba(21,243,236,0.08)', color: '#15f3ec' }
+                      : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }
+                  }>
                     {c.authorRole}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600">{c.content}</p>
-                <p className="text-xs text-gray-400 mt-2">{c.createdAt}</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{c.content}</p>
+                <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{c.createdAt}</p>
               </div>
             )}
           </div>
@@ -102,10 +106,10 @@ export default function ImageViewer({ file, comments, onAddComment }) {
         {/* Pending pin */}
         {pendingPin && (
           <div
-            className="absolute z-20 w-6 h-6 rounded-full bg-orange-400 border-2 border-orange-200 flex items-center justify-center shadow-lg animate-pulse"
-            style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%`, transform: 'translate(-50%, -50%)' }}
+            className="absolute z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg animate-pulse"
+            style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%`, transform: 'translate(-50%, -50%)', background: 'rgba(21,243,236,0.7)', borderColor: 'rgba(21,243,236,0.3)' }}
           >
-            <span className="text-xs font-bold text-white">{imageComments.length + 1}</span>
+            <span className="text-xs font-bold" style={{ color: '#0a0a0f' }}>{imageComments.length + 1}</span>
           </div>
         )}
 
@@ -117,8 +121,8 @@ export default function ImageViewer({ file, comments, onAddComment }) {
 
       {/* Pending comment form */}
       {pendingPin && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-          <p className="text-xs text-orange-700 mb-2 flex items-center gap-1">
+        <div className="rounded-lg p-3" style={{ background: 'rgba(21,243,236,0.08)', border: '1px solid rgba(21,243,236,0.2)' }}>
+          <p className="text-xs mb-2 flex items-center gap-1" style={{ color: '#15f3ec' }}>
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -130,10 +134,11 @@ export default function ImageViewer({ file, comments, onAddComment }) {
               name="commentText"
               autoFocus
               placeholder="Add your comment about this area..."
-              className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
+              className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)' }}
             />
-            <button type="submit" className="px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm rounded-lg transition-colors">Pin</button>
-            <button type="button" onClick={() => setPendingPin(null)} className="px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm rounded-lg transition-colors">Cancel</button>
+            <button type="submit" className="px-3 py-2 text-sm rounded-lg transition-colors" style={{ background: '#15f3ec', color: '#0a0a0f' }}>Pin</button>
+            <button type="button" onClick={() => setPendingPin(null)} className="px-3 py-2 text-sm rounded-lg transition-colors" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>Cancel</button>
           </form>
         </div>
       )}

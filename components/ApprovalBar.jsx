@@ -9,11 +9,11 @@ const fileStatusLabels = {
 };
 
 const statusConfig = {
-  'draft': { color: 'bg-gray-100 text-gray-500 border-gray-200', label: 'Draft', icon: '○' },
-  'in-review': { color: 'bg-orange-50 text-orange-600 border-orange-200', label: 'In Review', icon: '◷' },
-  'changes-requested': { color: 'bg-red-50 text-red-600 border-red-200', label: 'Changes Requested', icon: '◎' },
-  'approved': { color: 'bg-emerald-50 text-emerald-600 border-emerald-200', label: 'Approved', icon: '✓' },
-  'locked': { color: 'bg-purple-50 text-purple-600 border-purple-200', label: 'Locked', icon: '🔒' },
+  'draft': { color: '', label: 'Draft', icon: '○', style: { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)' } },
+  'in-review': { color: '', label: 'In Review', icon: '◷', style: { background: 'rgba(21,243,236,0.08)', color: '#15f3ec', border: '1px solid rgba(21,243,236,0.2)' } },
+  'changes-requested': { color: '', label: 'Changes Requested', icon: '◎', style: { background: 'rgba(255,80,80,0.08)', color: 'rgba(255,80,80,0.9)', border: '1px solid rgba(255,80,80,0.2)' } },
+  'approved': { color: '', label: 'Approved', icon: '✓', style: { background: 'rgba(22,255,192,0.08)', color: '#16ffc0', border: '1px solid rgba(22,255,192,0.2)' } },
+  'locked': { color: 'bg-purple-50 text-purple-600 border-purple-200', label: 'Locked', icon: '🔒', style: { background: 'rgba(147,51,234,0.08)', color: '#a855f7', border: '1px solid rgba(147,51,234,0.2)' } },
 };
 
 export default function ApprovalBar({ file, onStatusChange, clientName = 'Client' }) {
@@ -21,31 +21,32 @@ export default function ApprovalBar({ file, onStatusChange, clientName = 'Client
   const isLocked = file?.status === 'locked';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <div className="rounded-lg p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">File Status</span>
-        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>File Status</span>
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium" style={config.style}>
           {config.icon} {config.label}
         </span>
       </div>
 
       {isLocked ? (
-        <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <svg className="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center gap-2 rounded-lg p-3" style={{ background: 'rgba(147,51,234,0.08)', border: '1px solid rgba(147,51,234,0.2)' }}>
+          <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#a855f7' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          <p className="text-sm text-purple-700">This file is locked and cannot be modified.</p>
+          <p className="text-sm" style={{ color: '#a855f7' }}>This file is locked and cannot be modified.</p>
         </div>
       ) : (
         <div className="flex gap-2">
           <button
             onClick={() => onStatusChange('approved')}
             disabled={file?.status === 'approved'}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-150 ${
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-150"
+            style={
               file?.status === 'approved'
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-default'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/20'
-            }`}
+                ? { background: 'rgba(22,255,192,0.08)', color: '#16ffc0', border: '1px solid rgba(22,255,192,0.2)', cursor: 'default' }
+                : { background: '#16ffc0', color: '#0a0a0f', border: '1px solid #16ffc0' }
+            }
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -56,11 +57,12 @@ export default function ApprovalBar({ file, onStatusChange, clientName = 'Client
           <button
             onClick={() => onStatusChange('changes-requested')}
             disabled={file?.status === 'changes-requested'}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-150 ${
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-150"
+            style={
               file?.status === 'changes-requested'
-                ? 'bg-orange-50 text-orange-600 border border-orange-200 cursor-default'
-                : 'bg-orange-600 hover:bg-orange-500 text-white border border-orange-500 hover:shadow-lg hover:shadow-orange-500/20'
-            }`}
+                ? { background: 'rgba(21,243,236,0.08)', color: '#15f3ec', border: '1px solid rgba(21,243,236,0.2)', cursor: 'default' }
+                : { background: '#15f3ec', color: '#0a0a0f', border: '1px solid #15f3ec' }
+            }
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -76,7 +78,8 @@ export default function ApprovalBar({ file, onStatusChange, clientName = 'Client
           href={`/api/badge?fileName=${encodeURIComponent(file?.name || 'File')}&clientName=${encodeURIComponent(clientName)}&date=${encodeURIComponent(new Date().toLocaleDateString())}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+          className="mt-2 flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+          style={{ color: '#16ffc0', background: 'rgba(22,255,192,0.08)', border: '1px solid rgba(22,255,192,0.2)' }}
           title="Download approval badge for portfolio use"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,11 +96,18 @@ export default function ApprovalBar({ file, onStatusChange, clientName = 'Client
           const statusCfg = statusConfig[s];
           return (
             <div key={s} className="flex items-center gap-1 flex-shrink-0">
-              <div className={`px-1.5 py-0.5 rounded text-xs ${isActive ? `${statusCfg.color} border font-semibold` : 'text-gray-400'}`}>
+              <div
+                className="px-1.5 py-0.5 rounded text-xs"
+                style={
+                  isActive
+                    ? { ...statusCfg.style, fontWeight: 600 }
+                    : { color: 'rgba(255,255,255,0.4)' }
+                }
+              >
                 {fileStatusLabels[s] || s}
               </div>
               {idx < arr.length - 1 && (
-                <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.15)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               )}

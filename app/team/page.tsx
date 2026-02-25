@@ -2,6 +2,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import AppHeader from '@/components/AppHeader';
+
+const CYAN = '#15f3ec';
+const BLUE = '#5bc7f9';
+const MINT = '#16ffc0';
+const BG = '#0a0a0f';
+const CARD_BG = 'rgba(255,255,255,0.03)';
+const CARD_BORDER = 'rgba(255,255,255,0.06)';
 
 const teamMembers = [
   {
@@ -11,7 +19,7 @@ const teamMembers = [
     projects: 12,
     status: 'Active',
     bio: 'Leads visual strategy and brand identity projects. 8 years of experience in motion and print design.',
-    color: 'bg-orange-100 text-orange-700',
+    color: CYAN,
   },
   {
     name: 'Marcus Rivera',
@@ -20,7 +28,7 @@ const teamMembers = [
     projects: 8,
     status: 'Active',
     bio: 'Specializes in commercial video production, color grading, and motion graphics.',
-    color: 'bg-red-100 text-red-700',
+    color: BLUE,
   },
   {
     name: 'Priya Sharma',
@@ -29,7 +37,7 @@ const teamMembers = [
     projects: 15,
     status: 'Active',
     bio: 'Expert in social media content, brand systems, and digital illustration.',
-    color: 'bg-amber-100 text-amber-700',
+    color: MINT,
   },
   {
     name: 'DJ Nomad',
@@ -38,7 +46,7 @@ const teamMembers = [
     projects: 6,
     status: 'Active',
     bio: 'Podcast production, music mixing, sound design, and audio post-production.',
-    color: 'bg-orange-100 text-orange-800',
+    color: CYAN,
   },
 ];
 
@@ -59,14 +67,26 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }} onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl p-6"
+        style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: `1px solid rgba(255,255,255,0.08)`,
+          backdropFilter: 'blur(24px)',
+          boxShadow: `0 0 40px rgba(21,243,236,0.08), 0 24px 48px rgba(0,0,0,0.4)`,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Invite Team Member</h2>
-            <p className="text-xs text-gray-500 mt-0.5">They'll get an email with a link to join.</p>
+            <h2 className="text-base font-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>Invite Team Member</h2>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>They'll get an email with a link to join.</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="transition-colors" style={{ color: 'rgba(255,255,255,0.3)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -75,23 +95,31 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
         {sent ? (
           <div className="text-center py-6">
-            <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `rgba(22,255,192,0.1)` }}>
+              <svg className="w-7 h-7" style={{ color: MINT }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Invite Sent!</h3>
-            <p className="text-sm text-gray-500 mb-5">
-              An invitation has been sent to <span className="font-medium text-gray-700">{email}</span>.
+            <h3 className="text-base font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>Invite Sent!</h3>
+            <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              An invitation has been sent to <span className="font-medium" style={{ color: CYAN }}>{email}</span>.
             </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left mb-5">
-              <p className="text-xs text-amber-700">
+            <div className="rounded-lg p-3 text-left mb-5" style={{ background: 'rgba(91,199,249,0.08)', border: '1px solid rgba(91,199,249,0.15)' }}>
+              <p className="text-xs" style={{ color: BLUE }}>
                 <span className="font-semibold">Coming soon:</span> Email delivery is in development. Share the workspace link manually for now.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="px-6 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-6 py-2.5 text-sm font-medium rounded-lg transition-all"
+              style={{
+                background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+                color: BG,
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: `0 0 20px rgba(21,243,236,0.25)`,
+              }}
             >
               Done
             </button>
@@ -99,35 +127,53 @@ function InviteModal({ onClose }: { onClose: () => void }) {
         ) : (
           <form onSubmit={handleInvite} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Email Address <span className="text-red-500">*</span>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Email Address <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="teammate@studio.com"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                className="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.9)',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = `rgba(21,243,236,0.4)`;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(21,243,236,0.08)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Role</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Role</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-orange-400 bg-white"
+                className="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.9)',
+                }}
               >
-                <option>Creative Director</option>
-                <option>Video Producer</option>
-                <option>Graphic Designer</option>
-                <option>Audio Engineer</option>
-                <option>Editor</option>
-                <option>Motion Designer</option>
+                <option style={{ background: '#1a1a24', color: 'white' }}>Creative Director</option>
+                <option style={{ background: '#1a1a24', color: 'white' }}>Video Producer</option>
+                <option style={{ background: '#1a1a24', color: 'white' }}>Graphic Designer</option>
+                <option style={{ background: '#1a1a24', color: 'white' }}>Audio Engineer</option>
+                <option style={{ background: '#1a1a24', color: 'white' }}>Editor</option>
+                <option style={{ background: '#1a1a24', color: 'white' }}>Motion Designer</option>
               </select>
             </div>
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-              <p className="text-xs text-orange-700">
+            <div className="rounded-lg p-3" style={{ background: 'rgba(91,199,249,0.08)', border: '1px solid rgba(91,199,249,0.12)' }}>
+              <p className="text-xs" style={{ color: BLUE }}>
                 They'll be able to view all projects and upload files. You can adjust permissions later.
               </p>
             </div>
@@ -135,14 +181,28 @@ function InviteModal({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer',
+                }}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || !email.trim()}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+                  color: BG,
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: `0 0 20px rgba(21,243,236,0.25)`,
+                }}
               >
                 {loading ? (
                   <>
@@ -168,6 +228,7 @@ export default function TeamPage() {
   const { user } = useAuth();
   const [showInvite, setShowInvite] = useState(false);
   const [stats, setStats] = useState<any>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
 
   useEffect(() => {
@@ -178,94 +239,106 @@ export default function TeamPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
-            <span className="font-bold text-lg tracking-tight text-gray-900">WrkFlo</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
-            <Link href="/team" className="text-sm font-medium text-gray-900 border-b-2 border-orange-500 pb-0.5">Team</Link>
-            <Link href="/settings" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Settings</Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link href="/projects/new">
-              <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Project
-              </button>
-            </Link>
-            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-700">
-              {userInitial}
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ background: BG }}>
+      <AppHeader />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Team</h1>
-          <p className="text-gray-500 mt-1">Your creative crew — the people making it happen.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'rgba(255,255,255,0.9)' }}>Team</h1>
+          <p className="mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Your creative crew — the people making it happen.</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <p className="text-xs text-gray-500 mb-1">Team Members</p>
-            <p className="text-2xl font-bold text-gray-900">{teamMembers.length}</p>
+          <div className="rounded-2xl p-4" style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}>
+            <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Team Members</p>
+            <p className="text-2xl font-bold" style={{ color: CYAN }}>{teamMembers.length}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <p className="text-xs text-gray-500 mb-1">Active Projects</p>
-            <p className="text-2xl font-bold text-orange-600">{stats?.activeProjects ?? '—'}</p>
+          <div className="rounded-2xl p-4" style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}>
+            <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Active Projects</p>
+            <p className="text-2xl font-bold" style={{ color: BLUE }}>{stats?.activeProjects ?? '—'}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <p className="text-xs text-gray-500 mb-1">Deliverables This Month</p>
-            <p className="text-2xl font-bold text-emerald-600">{stats?.deliverableThisMonth ?? '—'}</p>
+          <div className="rounded-2xl p-4" style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}>
+            <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Deliverables This Month</p>
+            <p className="text-2xl font-bold" style={{ color: MINT }}>{stats?.deliverableThisMonth ?? '—'}</p>
           </div>
         </div>
 
         {/* Team cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {teamMembers.map((member) => (
-            <div key={member.name} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-bold ${member.color}`}>
-                  {member.initials}
+          {teamMembers.map((member) => {
+            const isHovered = hoveredCard === member.name;
+            return (
+              <div
+                key={member.name}
+                className="rounded-2xl p-5 transition-all duration-300"
+                style={{
+                  background: CARD_BG,
+                  border: `1px solid ${isHovered ? `${member.color}33` : CARD_BORDER}`,
+                  boxShadow: isHovered ? `0 0 24px ${member.color}15, 0 8px 32px rgba(0,0,0,0.3)` : 'none',
+                }}
+                onMouseEnter={() => setHoveredCard(member.name)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold"
+                    style={{
+                      background: `${member.color}15`,
+                      color: member.color,
+                      border: `1px solid ${member.color}30`,
+                    }}
+                  >
+                    {member.initials}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.9)' }}>{member.name}</p>
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{member.role}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">{member.name}</p>
-                  <p className="text-xs text-gray-500">{member.role}</p>
+                <p className="text-xs leading-relaxed mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>{member.bio}</p>
+                <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${CARD_BORDER}` }}>
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{member.projects} projects</span>
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded-full"
+                    style={{
+                      background: `rgba(22,255,192,0.1)`,
+                      color: MINT,
+                      border: `1px solid rgba(22,255,192,0.2)`,
+                    }}
+                  >
+                    {member.status}
+                  </span>
                 </div>
               </div>
-              <p className="text-xs text-gray-600 leading-relaxed mb-4">{member.bio}</p>
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <span className="text-xs text-gray-500">{member.projects} projects</span>
-                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{member.status}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Invite CTA */}
-        <div className="mt-8 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-6 flex items-center justify-between">
+        <div
+          className="mt-8 rounded-2xl p-6 flex items-center justify-between"
+          style={{
+            background: `linear-gradient(135deg, ${CYAN}18, ${MINT}12)`,
+            border: `1px solid ${CYAN}25`,
+            boxShadow: `0 0 32px ${CYAN}10`,
+          }}
+        >
           <div>
-            <h3 className="font-semibold text-gray-900">Grow your team</h3>
-            <p className="text-sm text-gray-600 mt-1">Invite collaborators to join your WrkFlo workspace.</p>
+            <h3 className="font-extrabold tracking-tight" style={{ color: 'rgba(255,255,255,0.9)' }}>Grow your team</h3>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Invite collaborators to join your WrkFlo workspace.</p>
           </div>
           <button
             onClick={() => setShowInvite(true)}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2.5 text-sm font-semibold rounded-xl transition-all"
+            style={{
+              background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+              color: BG,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: `0 0 20px rgba(21,243,236,0.3)`,
+              fontWeight: 700,
+            }}
           >
             Invite Member
           </button>

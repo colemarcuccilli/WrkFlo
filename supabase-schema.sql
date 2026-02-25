@@ -150,3 +150,65 @@ create table if not exists waitlist (
   email text not null unique,
   created_at timestamptz default now()
 );
+
+-- ── Client Account System ─────────────────────────────────────────────────────
+
+-- Subscription tiers
+create table if not exists public.subscription_tiers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  max_clients int not null default 5,
+  max_projects_per_client int not null default 5,
+  created_at timestamptz default now()
+);
+
+-- Creator subscriptions
+create table if not exists public.creator_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  creator_id uuid not null references public.users(id) on delete cascade,
+  tier_id uuid not null references public.subscription_tiers(id),
+  status text not null default 'trial',
+  trial_ends_at timestamptz default (now() + interval '14 days'),
+  created_at timestamptz default now(),
+  unique(creator_id)
+);
+
+-- Creator-client relationships
+create table if not exists public.creator_clients (
+  id uuid primary key default gen_random_uuid(),
+  creator_id uuid not null references public.users(id) on delete cascade,
+  client_id uuid references public.users(id) on delete set null,
+  client_email text not null,
+  status text not null default 'pending',
+  created_at timestamptz default now(),
+  unique(creator_id, client_email)
+);
+
+-- Client project access
+create table if not exists public.client_project_access (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references public.users(id) on delete cascade,
+  project_id uuid not null references public.projects(id) on delete cascade,
+  granted_by uuid references public.users(id) on delete set null,
+  created_at timestamptz default now(),
+  unique(client_id, project_id)
+);
+
+-- Indexes for client system
+create index if not exists idx_creator_subscriptions_creator on public.creator_subscriptions(creator_id);
+create index if not exists idx_creator_clients_creator on public.creator_clients(creator_id);
+create index if not exists idx_creator_clients_client on public.creator_clients(client_id);
+create index if not exists idx_creator_clients_email on public.creator_clients(client_email);
+create index if not exists idx_client_project_access_client on public.client_project_access(client_id);
+create index if not exists idx_client_project_access_project on public.client_project_access(project_id);
+
+-- RLS on client system tables
+alter table public.subscription_tiers enable row level security;
+alter table public.creator_subscriptions enable row level security;
+alter table public.creator_clients enable row level security;
+alter table public.client_project_access enable row level security;
+
+-- Seed tiers
+insert into public.subscription_tiers (name, max_clients, max_projects_per_client)
+values ('Starter', 5, 5), ('Professional', 20, 15), ('Business', 999999, 999999)
+on conflict (name) do nothing;
