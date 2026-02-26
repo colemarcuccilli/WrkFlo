@@ -275,10 +275,36 @@ export default function ClientsPage() {
 
   useEffect(() => { fetchClients(); }, []);
 
+  const [resending, setResending] = useState<string | null>(null);
+
   const handleRevoke = async (clientId: string) => {
     if (!confirm('Revoke this client? They will lose access to all assigned projects.')) return;
     await fetch(`/api/clients/${clientId}`, { method: 'DELETE' });
     fetchClients();
+  };
+
+  const handleCancel = async (clientId: string) => {
+    if (!confirm('Cancel this invite? The client record will be deleted and you can re-invite later.')) return;
+    await fetch(`/api/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'cancel' }),
+    });
+    fetchClients();
+  };
+
+  const handleResend = async (clientId: string) => {
+    setResending(clientId);
+    const res = await fetch(`/api/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'resend' }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to resend');
+    }
+    setResending(null);
   };
 
   const statusBadge = (status: string) => {
@@ -396,27 +422,50 @@ export default function ClientsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {client.status !== 'revoked' && (
+                    {client.status === 'pending' && (
                       <button
-                        onClick={() => setAssignClient(client)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
-                        style={{ border: `1px solid rgba(255,255,255,0.1)`, color: TEXT_SECONDARY, background: 'transparent' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                        onClick={() => handleResend(client.id)}
+                        disabled={resending === client.id}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all disabled:opacity-50"
+                        style={{ border: `1px solid rgba(21,243,236,0.2)`, color: CYAN, background: 'transparent' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(21,243,236,0.08)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        Assign Projects
+                        {resending === client.id ? 'Sending...' : 'Resend Invite'}
                       </button>
                     )}
-                    {client.status !== 'revoked' && (
+                    {client.status === 'pending' && (
                       <button
-                        onClick={() => handleRevoke(client.id)}
+                        onClick={() => handleCancel(client.id)}
                         className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
                         style={{ border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', background: 'transparent' }}
                         onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        Revoke
+                        Cancel Invite
                       </button>
+                    )}
+                    {client.status === 'active' && (
+                      <>
+                        <button
+                          onClick={() => setAssignClient(client)}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
+                          style={{ border: `1px solid rgba(255,255,255,0.1)`, color: TEXT_SECONDARY, background: 'transparent' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                        >
+                          Assign Projects
+                        </button>
+                        <button
+                          onClick={() => handleRevoke(client.id)}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
+                          style={{ border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', background: 'transparent' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          Revoke
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
