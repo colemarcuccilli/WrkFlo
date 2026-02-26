@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { createClient } from '@/lib/supabase/server'
+import { sendClientInviteEmail } from '@/lib/email'
 
 export async function GET(req: NextRequest) {
   const supabaseAuth = await createClient()
@@ -101,6 +102,22 @@ export async function POST(req: NextRequest) {
       .from('users')
       .update({ role: 'client' })
       .eq('id', existingUser.id)
+  }
+
+  // Send invitation email
+  const creatorName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'A creator'
+  const origin = req.headers.get('origin') || 'https://wrkflo-sweet-dreams-projects.vercel.app'
+  const loginUrl = `${origin}/login`
+
+  try {
+    await sendClientInviteEmail({
+      to: email,
+      creatorName,
+      loginUrl,
+    })
+  } catch (emailErr) {
+    console.error('Failed to send invite email:', emailErr)
+    // Don't fail the invite if email fails — client record is already created
   }
 
   return NextResponse.json(clientRecord, { status: 201 })
