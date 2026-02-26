@@ -113,8 +113,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // If client exists, update their role to 'client' if not already
-  if (existingUser && existingUser.role !== 'client') {
+  // If client exists and has no role or a non-creator role, set to 'client'
+  // NEVER downgrade a creator to client
+  if (existingUser && existingUser.role !== 'client' && existingUser.role !== 'creator') {
     await supabase
       .from('users')
       .update({ role: 'client' })

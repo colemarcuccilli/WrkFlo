@@ -9,11 +9,19 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Ensure user record has client role
-  await supabase
+  // Check current role — NEVER downgrade a creator to client
+  const { data: profile } = await supabase
     .from('users')
-    .update({ role: 'client' })
+    .select('role')
     .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'creator') {
+    await supabase
+      .from('users')
+      .update({ role: 'client' })
+      .eq('id', user.id)
+  }
 
   // Find all pending invites for this email and activate them
   const { data: pendingInvites } = await supabase

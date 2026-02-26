@@ -19,11 +19,19 @@ export async function GET(request: NextRequest) {
         if (role === 'client') {
           const serviceClient = createServiceClient()
 
-          // Update user role to client
-          await serviceClient
+          // Check current role — NEVER downgrade a creator to client
+          const { data: existingProfile } = await serviceClient
             .from('users')
-            .update({ role: 'client' })
+            .select('role')
             .eq('id', user.id)
+            .single()
+
+          if (existingProfile?.role !== 'creator') {
+            await serviceClient
+              .from('users')
+              .update({ role: 'client' })
+              .eq('id', user.id)
+          }
 
           // Activate any pending invites for this email
           const { data: pendingInvites } = await serviceClient
@@ -41,6 +49,10 @@ export async function GET(request: NextRequest) {
             }
           }
 
+          // Redirect based on actual role (creator stays on dashboard)
+          if (existingProfile?.role === 'creator') {
+            return NextResponse.redirect(`${origin}/dashboard`)
+          }
           return NextResponse.redirect(`${origin}/client-dashboard`)
         }
 

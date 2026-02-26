@@ -29,6 +29,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No invitation found for this email. Ask the creator to invite you first.' }, { status: 403 })
   }
 
+  // Check if this email already belongs to a creator — don't allow signup that would conflict
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id, role')
+    .eq('email', email)
+    .single()
+
+  if (existingUser?.role === 'creator') {
+    return NextResponse.json({ error: 'This email belongs to a creator account. Please sign in instead.' }, { status: 409 })
+  }
+
   // Create user via admin API — auto-confirmed, no email needed
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
