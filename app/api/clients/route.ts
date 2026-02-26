@@ -20,20 +20,37 @@ export async function GET(req: NextRequest) {
   // Get creator's clients
   const { data: clients, error } = await supabase
     .from('creator_clients')
-    .select('*, client_project_access(project_id)')
+    .select('*')
     .eq('creator_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Error fetching clients:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Fetch project access counts separately to avoid join issues
+  const clientsWithAccess = await Promise.all(
+    (clients || []).map(async (c: any) => {
+      if (c.client_id) {
+        const { data: access } = await supabase
+          .from('client_project_access')
+          .select('project_id')
+          .eq('client_id', c.client_id)
+        return { ...c, client_project_access: access || [] }
+      }
+      return { ...c, client_project_access: [] }
+    })
+  )
 
   // Default to Starter tier if no subscription
   const tier = sub?.subscription_tiers || { name: 'Starter', max_clients: 5, max_projects_per_client: 5 }
 
   return NextResponse.json({
-    clients: clients || [],
+    clients: clientsWithAccess,
     tier,
     usage: {
-      clientsUsed: (clients || []).filter((c: any) => c.status === 'active' || c.status === 'pending').length,
+      clientsUsed: clientsWithAccess.filter((c: any) => c.status === 'active' || c.status === 'pending').length,
       maxClients: tier.max_clients,
     },
     subscription: sub,

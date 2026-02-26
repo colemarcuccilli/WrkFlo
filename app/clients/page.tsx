@@ -266,11 +266,24 @@ export default function ClientsPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [assignClient, setAssignClient] = useState<any>(null);
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   const fetchClients = () => {
+    setFetchError(null);
     fetch('/api/clients')
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((d) => {
+        if (d.error) {
+          setFetchError(d.error);
+        } else {
+          setData(d);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        setFetchError(err.message);
+        setLoading(false);
+      });
   };
 
   useEffect(() => { fetchClients(); }, []);
@@ -364,6 +377,16 @@ export default function ClientsPage() {
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* Error display */}
+        {fetchError && (
+          <div className="rounded-2xl p-5 mb-6" style={{ background: 'rgba(255,80,80,0.08)', border: '1px solid rgba(255,80,80,0.2)' }}>
+            <p className="text-sm font-medium" style={{ color: '#ff6b6b' }}>Error loading clients: {fetchError}</p>
+            <button onClick={fetchClients} className="mt-2 text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: 'rgba(255,80,80,0.15)', color: '#ff6b6b' }}>
+              Retry
+            </button>
           </div>
         )}
 

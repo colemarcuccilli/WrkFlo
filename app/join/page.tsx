@@ -62,18 +62,25 @@ export default function JoinPage() {
     setMessage('')
 
     if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { role: 'client', full_name: name || email.split('@')[0] },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/client-dashboard&role=client`,
-        },
+      // Server-side signup — auto-confirms since they were invited
+      const res = await fetch('/api/join/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name: name || email.split('@')[0] }),
       })
-      if (error) {
-        setError(error.message)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Signup failed')
       } else {
-        setMessage('Check your email for a confirmation link to complete your account.')
+        // Account created and confirmed — now sign them in
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        if (signInError) {
+          setError('Account created! Please sign in.')
+          setMode('login')
+        } else {
+          window.location.href = '/client-dashboard'
+          return
+        }
       }
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
