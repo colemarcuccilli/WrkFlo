@@ -10,12 +10,12 @@ export async function sendClientInviteEmail({
   to,
   creatorName,
   projectNames,
-  loginUrl,
+  joinUrl,
 }: {
   to: string
   creatorName: string
   projectNames?: string[]
-  loginUrl: string
+  joinUrl: string
 }) {
   const projectList = projectNames && projectNames.length > 0
     ? projectNames.map(n => `<li style="padding:4px 0;color:rgba(255,255,255,0.8)">${n}</li>`).join('')
@@ -56,8 +56,8 @@ export async function sendClientInviteEmail({
 
       <!-- CTA Button -->
       <div style="text-align:center;margin:28px 0">
-        <a href="${loginUrl}" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#15f3ec,#16ffc0);color:#0a0a0f;font-size:15px;font-weight:700;text-decoration:none;border-radius:10px;box-shadow:0 4px 20px rgba(21,243,236,0.3)">
-          Sign In to Review
+        <a href="${joinUrl}" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#15f3ec,#16ffc0);color:#0a0a0f;font-size:15px;font-weight:700;text-decoration:none;border-radius:10px;box-shadow:0 4px 20px rgba(21,243,236,0.3)">
+          Accept Invite
         </a>
       </div>
 

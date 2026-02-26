@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await sendClientInviteEmail({
         to: clientRecord.client_email,
         creatorName,
-        loginUrl: `${origin}/login`,
+        joinUrl: `${origin}/join?email=${encodeURIComponent(clientRecord.client_email)}&from=${encodeURIComponent(creatorName)}`,
       })
     } catch (emailErr: any) {
       return NextResponse.json({ error: 'Failed to send email: ' + emailErr.message }, { status: 500 })

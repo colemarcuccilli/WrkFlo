@@ -18,6 +18,6 @@ export const config = {
      * - /auth/* (auth callback routes)
      * - static assets (.svg, .png, .jpg, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/|login|auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/|login|join|auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
