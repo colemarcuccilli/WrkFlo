@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_KEY)
 
 // Until you verify a custom domain in Resend, emails send from onboarding@resend.dev
 // Once verified, change this to e.g. noreply@wrkflo.app
-const FROM_EMAIL = 'WrkFlo <onboarding@resend.dev>'
+const FROM_EMAIL = 'WrkFlo <noreply@wrkflo.us>'
 
 export async function sendClientInviteEmail({
   to,
