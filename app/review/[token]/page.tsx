@@ -1,7 +1,7 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth, useUserRole } from '@/components/AuthProvider';
 import FileBrowser from '@/components/FileBrowser';
 import FilePreview from '@/components/FilePreview';
 import CommentFeed from '@/components/CommentFeed';
@@ -25,6 +25,7 @@ const TEXT_TERTIARY = 'rgba(255,255,255,0.4)';
 function normalizeFile(f: any) {
   return {
     ...f,
+    currentRound: f.current_round || 1,
     uploadDate: f.upload_date || f.uploadDate || '',
     versions: (f.file_versions || f.versions || []).map((v: any) => ({
       version: v.version_label || v.version,
@@ -38,6 +39,7 @@ function normalizeFile(f: any) {
       authorRole: c.author_role || c.authorRole || 'client',
       content: c.content,
       timestamp: c.timestamp_data || c.timestamp || null,
+      revisionRound: c.revision_round || 1,
       createdAt: c.created_at ? new Date(c.created_at).toLocaleString() : c.createdAt || '',
     })),
   };
@@ -57,6 +59,7 @@ export default function ReviewPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const userRole = useUserRole();
   const token = params.token as string;
 
   const [project, setProject] = useState<any>(null);
@@ -157,12 +160,14 @@ export default function ReviewPage() {
   };
 
   const handleAddComment = async ({ text, timestamp }: { text: string; timestamp: any }) => {
+    const fileRound = selectedFile?.currentRound || 1;
     const newComment = {
       id: `c-client-${Date.now()}`,
       author: displayName,
       authorRole: 'client',
       content: text,
       timestamp: timestamp,
+      revisionRound: fileRound,
       createdAt: new Date().toLocaleString(),
     };
     // Optimistic update
@@ -197,9 +202,14 @@ export default function ReviewPage() {
     setProject((prev: any) => {
       const updated = {
         ...prev,
-        files: prev.files.map((f: any) =>
-          f.id === selectedFileId ? { ...f, status: newStatus } : f
-        ),
+        files: prev.files.map((f: any) => {
+          if (f.id !== selectedFileId) return f;
+          // Increment round when going from changes-requested → in-review
+          const newRound = (f.status === 'changes-requested' && newStatus === 'in-review')
+            ? (f.currentRound || 1) + 1
+            : (f.currentRound || 1);
+          return { ...f, status: newStatus, currentRound: newRound };
+        }),
       };
       const allDone = updated.files.every(
         (f: any) => f.status === 'approved' || f.status === 'locked'
@@ -335,6 +345,8 @@ export default function ReviewPage() {
               <ApprovalBar
                 file={selectedFile}
                 onStatusChange={handleStatusChange}
+                viewerRole={userRole}
+                currentRound={selectedFile?.currentRound || 1}
               />
             </div>
           )}
@@ -353,6 +365,7 @@ export default function ReviewPage() {
               comments={fileComments}
               fileType={selectedFile?.type}
               onSeekToTimestamp={handleSeekToTimestamp}
+              currentRound={selectedFile?.currentRound || 1}
             />
           </div>
 

@@ -36,6 +36,7 @@ const statusStyles: Record<string, React.CSSProperties> = {
 function normalizeFile(f: any) {
   return {
     ...f,
+    currentRound: f.current_round || 1,
     uploadDate: f.upload_date || f.uploadDate || '',
     versions: (f.file_versions || f.versions || []).map((v: any) => ({
       version: v.version_label || v.version,
@@ -49,6 +50,7 @@ function normalizeFile(f: any) {
       authorRole: c.author_role || c.authorRole || 'client',
       content: c.content,
       timestamp: c.timestamp_data || c.timestamp || null,
+      revisionRound: c.revision_round || 1,
       createdAt: c.created_at ? new Date(c.created_at).toLocaleString() : c.createdAt || '',
     })),
   };
@@ -145,12 +147,14 @@ export default function ProjectPage() {
   }, []);
 
   const handleAddComment = useCallback(async ({ text, timestamp }: { text: string; timestamp: any }) => {
+    const fileRound = selectedFile?.currentRound || 1;
     const newComment = {
       id: `c-new-${Date.now()}`,
       author: userName,
       authorRole: 'creator',
       content: text,
       timestamp: timestamp,
+      revisionRound: fileRound,
       createdAt: new Date().toLocaleString(),
     };
     // Optimistic update
@@ -178,16 +182,21 @@ export default function ProjectPage() {
     } catch (e) {
       console.error('Failed to save comment:', e);
     }
-  }, [selectedFileId, userName]);
+  }, [selectedFileId, userName, selectedFile?.currentRound]);
 
   const handleStatusChange = useCallback(async (newStatus: string) => {
     // Optimistic update
     setProject((prev: any) => {
       const updated = {
         ...prev,
-        files: prev.files.map((f: any) =>
-          f.id === selectedFileId ? { ...f, status: newStatus } : f
-        ),
+        files: prev.files.map((f: any) => {
+          if (f.id !== selectedFileId) return f;
+          // Increment round when going from changes-requested → in-review
+          const newRound = (f.status === 'changes-requested' && newStatus === 'in-review')
+            ? (f.currentRound || 1) + 1
+            : (f.currentRound || 1);
+          return { ...f, status: newStatus, currentRound: newRound };
+        }),
       };
       const allDone = updated.files.every(
         (f: any) => f.status === 'approved' || f.status === 'locked'
@@ -477,7 +486,8 @@ export default function ProjectPage() {
               <ApprovalBar
                 file={selectedFile}
                 onStatusChange={handleStatusChange}
-                clientName={project.client}
+                viewerRole="creator"
+                currentRound={selectedFile?.currentRound || 1}
               />
               <FeedbackSummarizer project={project} />
             </div>
@@ -488,6 +498,7 @@ export default function ProjectPage() {
               comments={fileComments}
               fileType={selectedFile?.type}
               onSeekToTimestamp={handleSeekToTimestamp}
+              currentRound={selectedFile?.currentRound || 1}
             />
           </div>
 
