@@ -25,10 +25,12 @@ function groupByRound(comments) {
 
 function CommentCard({ comment, comments, fileType, onSeekToTimestamp }) {
   const hasTimestamp = typeof comment.timestamp === 'number';
-  const hasPin = comment.timestamp && typeof comment.timestamp === 'object' && 'x' in comment.timestamp;
-  const pinNumber = hasPin
-    ? comments.filter((c) => c.timestamp && typeof c.timestamp === 'object').findIndex((c) => c.id === comment.id) + 1
-    : null;
+  const hasImagePin = comment.timestamp && typeof comment.timestamp === 'object' && 'x' in comment.timestamp && !('time' in comment.timestamp);
+  const hasVideoPin = comment.timestamp && typeof comment.timestamp === 'object' && 'x' in comment.timestamp && 'time' in comment.timestamp;
+  const hasAnyPin = hasImagePin || hasVideoPin;
+
+  const allPins = comments.filter((c) => c.timestamp && typeof c.timestamp === 'object' && 'x' in c.timestamp);
+  const pinNumber = hasAnyPin ? allPins.findIndex((c) => c.id === comment.id) + 1 : null;
 
   return (
     <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -52,7 +54,7 @@ function CommentCard({ comment, comments, fileType, onSeekToTimestamp }) {
           </span>
         </div>
 
-        {/* Timestamp / pin badge */}
+        {/* Time-only comment: timestamp button */}
         {hasTimestamp && (
           <button
             onClick={() => onSeekToTimestamp && onSeekToTimestamp(comment.timestamp)}
@@ -63,7 +65,26 @@ function CommentCard({ comment, comments, fileType, onSeekToTimestamp }) {
             ▶ {formatTime(comment.timestamp)}
           </button>
         )}
-        {hasPin && pinNumber && (
+
+        {/* Video pin: pin number + timestamp */}
+        {hasVideoPin && pinNumber && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => onSeekToTimestamp && onSeekToTimestamp(comment.timestamp)}
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors"
+              style={{ color: CYAN, background: 'rgba(21,243,236,0.08)' }}
+              title="Jump to this pin"
+            >
+              ▶ {formatTime(comment.timestamp.time)}
+            </button>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: CYAN, color: '#0a0a0f' }}>
+              {pinNumber}
+            </div>
+          </div>
+        )}
+
+        {/* Image pin: pin number only */}
+        {hasImagePin && pinNumber && (
           <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: CYAN, color: '#0a0a0f' }}>
             {pinNumber}
           </div>

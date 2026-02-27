@@ -235,7 +235,7 @@ export default function ProjectPage() {
     }
   }, [selectedFileId, project, projectId]);
 
-  const handleSeekToTimestamp = (ts: number) => {
+  const handleSeekToTimestamp = (ts: any) => {
     if (typeof window !== 'undefined' && (window as any).__wrkflo_seek) {
       (window as any).__wrkflo_seek(ts);
     }
