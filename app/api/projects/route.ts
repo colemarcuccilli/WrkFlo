@@ -79,9 +79,8 @@ export async function POST(req: NextRequest) {
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Auto-assign client access if a client_id was provided
+  // Auto-assign client access if a client_id was provided (same as ShareModal logic)
   if (body.client_id && data?.id) {
-    // Look up the client record to get the actual user id
     const { data: clientRecord } = await supabase
       .from('creator_clients')
       .select('client_id')
@@ -92,11 +91,13 @@ export async function POST(req: NextRequest) {
     if (clientRecord?.client_id) {
       await supabase
         .from('client_project_access')
-        .upsert({
+        .insert({
           client_id: clientRecord.client_id,
           project_id: data.id,
-          creator_id: user.id,
-        }, { onConflict: 'client_id,project_id' })
+          granted_by: user.id,
+        })
+        .select()
+        .single()
     }
   }
 
