@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
   // Fetch the project by review token
   const { data, error } = await supabase
     .from('projects')
-    .select(`*, files (id, name, type, version, status, current_round, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, revision_round, created_at))`)
+    .select(`*, files (id, name, type, version, status, current_round, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, revision_round, parent_id, created_at))`)
     .eq('review_token', params.token)
     .single()
 

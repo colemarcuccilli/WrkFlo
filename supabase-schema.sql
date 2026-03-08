@@ -246,3 +246,10 @@ ALTER TABLE public.user_cloud_tokens ENABLE ROW LEVEL SECURITY;
 -- SELECT user_id, 'google_drive', access_token, refresh_token, token_expiry, google_email, updated_at
 -- FROM public.user_drive_tokens
 -- ON CONFLICT (user_id, provider) DO NOTHING;
+
+-- ── Comment Replies ─────────────────────────────────────────────────────
+-- Add parent_id for threaded replies
+ALTER TABLE public.comments
+  ADD COLUMN IF NOT EXISTS parent_id uuid REFERENCES public.comments(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);

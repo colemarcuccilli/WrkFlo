@@ -51,6 +51,7 @@ function normalizeFile(f: any) {
       content: c.content,
       timestamp: c.timestamp_data || c.timestamp || null,
       revisionRound: c.revision_round || 1,
+      parentId: c.parent_id || c.parentId || null,
       createdAt: c.created_at ? new Date(c.created_at).toLocaleString() : c.createdAt || '',
     })),
   };
@@ -181,6 +182,43 @@ export default function ProjectPage() {
       });
     } catch (e) {
       console.error('Failed to save comment:', e);
+    }
+  }, [selectedFileId, userName, selectedFile?.currentRound]);
+
+  const handleReply = useCallback(async (parentId: string, text: string) => {
+    const fileRound = selectedFile?.currentRound || 1;
+    const newReply = {
+      id: `r-new-${Date.now()}`,
+      author: userName,
+      authorRole: 'creator',
+      content: text,
+      timestamp: null,
+      revisionRound: fileRound,
+      parentId,
+      createdAt: new Date().toLocaleString(),
+    };
+    setProject((prev: any) => ({
+      ...prev,
+      files: prev.files.map((f: any) =>
+        f.id === selectedFileId
+          ? { ...f, comments: [...f.comments, newReply] }
+          : f
+      ),
+    }));
+    try {
+      await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: selectedFileId,
+          author_name: userName,
+          author_role: 'creator',
+          content: text,
+          parent_id: parentId,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to save reply:', e);
     }
   }, [selectedFileId, userName, selectedFile?.currentRound]);
 
@@ -499,6 +537,7 @@ export default function ProjectPage() {
               fileType={selectedFile?.type}
               onSeekToTimestamp={handleSeekToTimestamp}
               currentRound={selectedFile?.currentRound || 1}
+              onReply={handleReply}
             />
           </div>
 

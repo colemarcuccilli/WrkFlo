@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       content: body.content,
       timestamp_data: body.timestamp_data || null,
       revision_round: revisionRound,
+      parent_id: body.parent_id || null,
     })
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

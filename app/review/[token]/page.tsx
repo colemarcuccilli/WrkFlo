@@ -40,6 +40,7 @@ function normalizeFile(f: any) {
       content: c.content,
       timestamp: c.timestamp_data || c.timestamp || null,
       revisionRound: c.revision_round || 1,
+      parentId: c.parent_id || c.parentId || null,
       createdAt: c.created_at ? new Date(c.created_at).toLocaleString() : c.createdAt || '',
     })),
   };
@@ -197,6 +198,43 @@ export default function ReviewPage() {
     }
   };
 
+  const handleReply = async (parentId: string, text: string) => {
+    const fileRound = selectedFile?.currentRound || 1;
+    const newReply = {
+      id: `r-client-${Date.now()}`,
+      author: displayName,
+      authorRole: 'client',
+      content: text,
+      timestamp: null,
+      revisionRound: fileRound,
+      parentId,
+      createdAt: new Date().toLocaleString(),
+    };
+    setProject((prev: any) => ({
+      ...prev,
+      files: prev.files.map((f: any) =>
+        f.id === selectedFileId
+          ? { ...f, comments: [...f.comments, newReply] }
+          : f
+      ),
+    }));
+    try {
+      await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: selectedFileId,
+          author_name: displayName,
+          author_role: 'client',
+          content: text,
+          parent_id: parentId,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to save reply:', e);
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     // Optimistic update
     setProject((prev: any) => {
@@ -249,14 +287,16 @@ export default function ReviewPage() {
       >
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            <button
+              onClick={() => router.push('/client-dashboard')}
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-opacity hover:opacity-80"
               style={{ background: `linear-gradient(135deg, ${CYAN}, ${MINT})` }}
+              title="Back to projects"
             >
               <svg className="w-4 h-4" style={{ color: BG }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
-            </div>
+            </button>
             <div>
               <p className="text-sm font-medium" style={{ color: TEXT_PRIMARY }}>
                 You&apos;re reviewing <span className="font-bold">{project.name}</span> by{' '}
@@ -366,6 +406,7 @@ export default function ReviewPage() {
               fileType={selectedFile?.type}
               onSeekToTimestamp={handleSeekToTimestamp}
               currentRound={selectedFile?.currentRound || 1}
+              onReply={handleReply}
             />
           </div>
 
