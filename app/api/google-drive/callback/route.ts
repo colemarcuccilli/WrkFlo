@@ -43,21 +43,22 @@ export async function GET(req: NextRequest) {
         googleEmail = userInfo.email || null
       }
     } catch {
-      // Non-critical — proceed without email
+      // Non-critical
     }
 
-    // Upsert tokens into database
+    // Upsert tokens into unified cloud tokens table
     const supabase = createServiceClient()
     const { error: dbError } = await supabase
-      .from('user_drive_tokens')
+      .from('user_cloud_tokens')
       .upsert({
         user_id: userId,
+        provider: 'google_drive',
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_expiry: expiry,
-        google_email: googleEmail,
+        account_email: googleEmail,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id' })
+      }, { onConflict: 'user_id,provider' })
 
     if (dbError) {
       console.error('Failed to store Drive tokens:', dbError.message)

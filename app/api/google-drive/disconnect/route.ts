@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { revokeAccess } from '@/lib/google-drive'
+import { revokeAccess } from '@/lib/cloud-storage'
 
 export async function POST() {
   const supabase = await createClient()
@@ -11,7 +11,7 @@ export async function POST() {
   }
 
   try {
-    await revokeAccess(user.id)
+    await revokeAccess(user.id, 'google_drive')
     return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Failed to disconnect' }, { status: 500 })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { getValidAccessToken } from '@/lib/google-drive'
+import { getValidAccessToken } from '@/lib/cloud-storage'
 
 export async function GET(req: NextRequest, { params }: { params: { fileId: string } }) {
   try {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: { fileId: stri
     }
 
     const ownerId = (fileRecord as any).projects.creator_id
-    const accessToken = await getValidAccessToken(ownerId)
+    const accessToken = await getValidAccessToken(ownerId, 'google_drive')
 
     // Build Google Drive download URL
     const driveUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`

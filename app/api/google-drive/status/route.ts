@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createServiceClient } from '@/lib/supabase'
+import { getConnectionStatus } from '@/lib/cloud-storage'
 
 export async function GET() {
   const supabase = await createClient()
@@ -10,15 +10,10 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const service = createServiceClient()
-  const { data: row } = await service
-    .from('user_drive_tokens')
-    .select('google_email')
-    .eq('user_id', user.id)
-    .single()
+  const status = await getConnectionStatus(user.id, 'google_drive')
 
   return NextResponse.json({
-    connected: !!row,
-    google_email: row?.google_email || null,
+    connected: status.connected,
+    google_email: status.email,
   })
 }
