@@ -1,6 +1,6 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import FileBrowser from '@/components/FileBrowser';
@@ -70,6 +70,7 @@ function normalizeProject(p: any) {
 export default function ProjectPage() {
   const { user } = useAuth();
   const params = useParams();
+  const router = useRouter();
   const projectId = params.id as string;
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'You';
 
@@ -377,40 +378,6 @@ export default function ProjectPage() {
 
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             <span className="text-xs hidden md:block" style={{ color: TEXT_SECONDARY }}>{project.client}</span>
-            {!isProjectComplete && approvedCount < project.files.length && (
-              <button
-                onClick={async () => {
-                  const unapproved = project.files.filter(
-                    (f: any) => f.status !== 'approved' && f.status !== 'locked'
-                  );
-                  for (const f of unapproved) {
-                    setProject((prev: any) => ({
-                      ...prev,
-                      files: prev.files.map((pf: any) =>
-                        pf.id === f.id ? { ...pf, status: 'approved' } : pf
-                      ),
-                    }));
-                    await fetch(`/api/files/${f.id}/status`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ status: 'approved' }),
-                    }).catch(() => {});
-                  }
-                  setTimeout(() => setShowCelebration(true), 400);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-                style={{
-                  background: `linear-gradient(to right, ${CYAN}, ${MINT})`,
-                  color: BG,
-                  boxShadow: `0 4px 14px rgba(21,243,236,0.3)`,
-                }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-                Approve All
-              </button>
-            )}
             <button
               onClick={() => setShowShare(true)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
@@ -424,6 +391,22 @@ export default function ProjectPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               Share with Client
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Delete this project? This cannot be undone.')) {
+                  fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
+                    .then((r) => { if (r.ok) router.push('/dashboard'); })
+                    .catch(() => {});
+                }
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all"
+              style={{ border: '1px solid rgba(255,80,80,0.2)', color: 'rgba(255,80,80,0.7)' }}
+              title="Delete project"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
         </div>

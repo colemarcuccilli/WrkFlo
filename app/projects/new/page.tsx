@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -33,18 +33,40 @@ const inputBlurHandler = (e: React.FocusEvent<HTMLInputElement | HTMLSelectEleme
 export default function NewProjectPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [form, setForm] = useState({ name: '', client_name: '', status: 'Draft', description: '', due_date: '' });
+  const [form, setForm] = useState({ name: '', client_name: '', status: 'Draft', description: '', due_date: '', client_id: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [cancelHovered, setCancelHovered] = useState(false);
-  const [submitHovered, setSubmitHovered] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
   const [navHovered, setNavHovered] = useState<string | null>(null);
   const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
+
+  // Fetch creator's existing clients
+  useEffect(() => {
+    fetch('/api/clients')
+      .then((r) => r.json())
+      .then((data) => {
+        setClients(data.clients || []);
+        setClientsLoading(false);
+      })
+      .catch(() => setClientsLoading(false));
+  }, []);
+
+  const handleClientSelect = (clientId: string) => {
+    if (clientId === 'new') {
+      setForm((p) => ({ ...p, client_id: '', client_name: '' }));
+    } else {
+      const client = clients.find((c: any) => c.id === clientId);
+      if (client) {
+        setForm((p) => ({ ...p, client_id: clientId, client_name: client.client_email }));
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.client_name.trim()) {
-      setError('Project name and client name are required.');
+      setError('Project name and client are required.');
       return;
     }
     setLoading(true);
@@ -53,7 +75,14 @@ export default function NewProjectPage() {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name,
+          client_name: form.client_name,
+          status: form.status,
+          description: form.description,
+          due_date: form.due_date,
+          client_id: form.client_id || undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -65,6 +94,8 @@ export default function NewProjectPage() {
       setLoading(false);
     }
   };
+
+  const activeClients = clients.filter((c: any) => c.status === 'active');
 
   return (
     <div className="min-h-screen" style={{ background: BG }}>
@@ -187,38 +218,71 @@ export default function NewProjectPage() {
               />
             </div>
 
+            {/* Client selection */}
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: TEXT_SECONDARY }}>
-                Client Name <span style={{ color: '#ff6b6b' }}>*</span>
+                Client <span style={{ color: '#ff6b6b' }}>*</span>
               </label>
-              <input
-                type="text"
-                value={form.client_name}
-                onChange={(e) => setForm((p) => ({ ...p, client_name: e.target.value }))}
-                placeholder="e.g. Northside Coffee Co."
-                className="w-full rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none"
-                style={inputStyle}
-                onFocus={inputFocusHandler}
-                onBlur={inputBlurHandler}
-                disabled={loading}
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: TEXT_SECONDARY }}>Initial Status</label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-                className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                style={{ ...inputStyle, appearance: 'auto' as any }}
-                onFocus={inputFocusHandler as any}
-                onBlur={inputBlurHandler as any}
-                disabled={loading}
-              >
-                <option value="Draft">Draft</option>
-                <option value="In Review">In Review</option>
-                <option value="Approved">Approved</option>
-              </select>
+              {clientsLoading ? (
+                <div className="rounded-lg px-4 py-2.5 text-sm" style={{ ...inputStyle, color: TEXT_TERTIARY }}>
+                  Loading clients...
+                </div>
+              ) : activeClients.length > 0 ? (
+                <div className="space-y-2">
+                  <select
+                    value={form.client_id || 'new'}
+                    onChange={(e) => handleClientSelect(e.target.value)}
+                    className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                    style={{ ...inputStyle, appearance: 'auto' as any }}
+                    onFocus={inputFocusHandler as any}
+                    onBlur={inputBlurHandler as any}
+                    disabled={loading}
+                  >
+                    <option value="new">+ New client (enter name below)</option>
+                    {activeClients.map((c: any) => (
+                      <option key={c.id} value={c.id}>
+                        {c.client_email}
+                      </option>
+                    ))}
+                  </select>
+                  {!form.client_id && (
+                    <input
+                      type="text"
+                      value={form.client_name}
+                      onChange={(e) => setForm((p) => ({ ...p, client_name: e.target.value }))}
+                      placeholder="e.g. Northside Coffee Co."
+                      className="w-full rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none"
+                      style={inputStyle}
+                      onFocus={inputFocusHandler}
+                      onBlur={inputBlurHandler}
+                      disabled={loading}
+                    />
+                  )}
+                  {form.client_id && (
+                    <p className="text-xs" style={{ color: CYAN }}>
+                      This client will automatically get access to review the project.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={form.client_name}
+                    onChange={(e) => setForm((p) => ({ ...p, client_name: e.target.value }))}
+                    placeholder="e.g. Northside Coffee Co."
+                    className="w-full rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none"
+                    style={inputStyle}
+                    onFocus={inputFocusHandler}
+                    onBlur={inputBlurHandler}
+                    disabled={loading}
+                  />
+                  <p className="text-xs" style={{ color: TEXT_TERTIARY }}>
+                    No clients yet. <Link href="/clients" className="underline" style={{ color: CYAN }}>Invite clients</Link> to share projects directly.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
@@ -260,12 +324,10 @@ export default function NewProjectPage() {
                   type="button"
                   className="w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-colors"
                   style={{
-                    background: cancelHovered ? 'rgba(255,255,255,0.05)' : 'transparent',
+                    background: 'transparent',
                     border: `1px solid ${CARD_BORDER}`,
                     color: TEXT_SECONDARY,
                   }}
-                  onMouseEnter={() => setCancelHovered(true)}
-                  onMouseLeave={() => setCancelHovered(false)}
                   disabled={loading}
                 >
                   Cancel
@@ -278,10 +340,8 @@ export default function NewProjectPage() {
                 style={{
                   background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
                   color: BG,
-                  boxShadow: submitHovered ? `0 4px 20px rgba(21,243,236,0.35)` : `0 2px 12px rgba(21,243,236,0.2)`,
+                  boxShadow: `0 2px 12px rgba(21,243,236,0.2)`,
                 }}
-                onMouseEnter={() => setSubmitHovered(true)}
-                onMouseLeave={() => setSubmitHovered(false)}
               >
                 {loading ? (
                   <>
