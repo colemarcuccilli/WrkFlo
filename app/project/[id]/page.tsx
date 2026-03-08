@@ -529,6 +529,7 @@ export default function ProjectPage() {
           fileId={selectedFile.id}
           fileName={selectedFile.name}
           currentVersion={selectedFile.version || 'V1'}
+          projectId={projectId}
           onVersionUploaded={handleVersionUploaded}
           onClose={() => setShowVersionUpload(false)}
         />

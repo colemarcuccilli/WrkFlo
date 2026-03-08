@@ -14,7 +14,6 @@ interface ProviderStatus {
 interface CloudImportPanelProps {
   projectId: string
   onImportComplete: (files: any[]) => void
-  onShowUpload?: () => void
 }
 
 const TABS: { key: CloudTab; label: string; icon: React.ReactNode }[] = [
@@ -58,7 +57,7 @@ const STATUS_URLS: Record<CloudTab, string> = {
   onedrive: '/api/onedrive/status',
 }
 
-export default function CloudImportPanel({ projectId, onImportComplete, onShowUpload }: CloudImportPanelProps) {
+export default function CloudImportPanel({ projectId, onImportComplete }: CloudImportPanelProps) {
   const [activeTab, setActiveTab] = useState<CloudTab>('google_drive')
   const [statuses, setStatuses] = useState<Record<CloudTab, ProviderStatus | null>>({
     google_drive: null,
@@ -139,23 +138,6 @@ export default function CloudImportPanel({ projectId, onImportComplete, onShowUp
         )}
       </div>
 
-      {/* Upload fallback */}
-      {onShowUpload && (
-        <div className="px-3 pb-3">
-          <div className="border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <button
-              onClick={onShowUpload}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs transition-colors"
-              style={{ color: 'rgba(255,255,255,0.35)' }}
-            >
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              or upload from device
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

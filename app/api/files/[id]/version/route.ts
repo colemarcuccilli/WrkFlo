@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 
-// POST /api/files/[id]/version — upload a new version of a file
+// POST /api/files/[id]/version — create a new version from cloud storage
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServiceClient()
-    const formData = await req.formData()
-    const file = formData.get('file') as File | null
-    const notes = formData.get('notes') as string || ''
+    const body = await req.json()
 
-    if (!file) {
-      return NextResponse.json({ error: 'file is required' }, { status: 400 })
+    const { url, storage_type, external_id, mime_type, name, notes = '' } = body
+
+    if (!url || !storage_type) {
+      return NextResponse.json({ error: 'url and storage_type are required' }, { status: 400 })
     }
 
     // Get current file record
@@ -27,23 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // Determine new version number
     const currentVersionNum = parseInt((fileRecord.version || 'V1').replace('V', '')) || 1
     const newVersionLabel = `V${currentVersionNum + 1}`
-
-    // Upload new file to storage
-    const storagePath = `projects/${fileRecord.project_id}/${Date.now()}-v${currentVersionNum + 1}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-    const arrayBuffer = await file.arrayBuffer()
-    
-    const { error: storageError } = await supabase.storage
-      .from('wrkflo-files')
-      .upload(storagePath, arrayBuffer, {
-        contentType: file.type,
-        upsert: false,
-      })
-
-    const { data: urlData } = supabase.storage
-      .from('wrkflo-files')
-      .getPublicUrl(storagePath)
-
-    const newUrl = storageError ? fileRecord.url : (urlData?.publicUrl || fileRecord.url)
+    const newRound = (fileRecord.current_round || 1) + 1
 
     // Insert version record
     await supabase.from('file_versions').insert({
@@ -52,14 +36,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       notes,
     })
 
-    // Update file record with new version + reset to in-review
+    // Update file record: new version, reset to in-review, bump revision round
     const { data: updated, error: updateError } = await supabase
       .from('files')
       .update({
         version: newVersionLabel,
-        url: newUrl,
+        url,
         status: 'in-review',
-        storage_type: 'local',
+        storage_type,
+        external_id: external_id || null,
+        mime_type: mime_type || null,
+        current_round: newRound,
         upload_date: new Date().toISOString().split('T')[0],
       })
       .eq('id', params.id)

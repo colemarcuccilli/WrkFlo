@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import FileUploader from './FileUploader';
 import CloudImportPanel from './CloudImportPanel';
 
 const fileStatusColors: Record<string, string> = {
@@ -86,7 +85,6 @@ interface FileBrowserProps {
 }
 
 export default function FileBrowser({ files, selectedFileId, onSelectFile, projectId, onUploadComplete }: FileBrowserProps) {
-  const [showUploader, setShowUploader] = useState(false);
   const [showCloudImport, setShowCloudImport] = useState(false);
 
   return (
@@ -95,7 +93,7 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
         <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>Files</h2>
         {projectId && (
           <button
-            onClick={() => { setShowCloudImport((v) => !v); if (!showCloudImport) setShowUploader(false); }}
+            onClick={() => setShowCloudImport((v) => !v)}
             title="Import files"
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
             style={showCloudImport
@@ -120,29 +118,12 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
               imported.forEach((f) => onUploadComplete?.(f));
               setShowCloudImport(false);
             }}
-            onShowUpload={() => {
-              setShowCloudImport(false);
-              setShowUploader(true);
-            }}
-          />
-        </div>
-      )}
-
-      {/* Direct upload panel */}
-      {showUploader && projectId && (
-        <div className="p-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
-          <FileUploader
-            projectId={projectId}
-            onUploadComplete={(file: any) => {
-              onUploadComplete?.(file);
-              setShowUploader(false);
-            }}
           />
         </div>
       )}
 
       <div className="flex-1 overflow-y-auto">
-        {files.length === 0 && !showUploader && (
+        {files.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
             <svg className="w-10 h-10 mb-3" style={{ color: 'rgba(255,255,255,0.08)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />

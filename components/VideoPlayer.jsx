@@ -239,10 +239,11 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
         {/* Play button overlay (only when paused and no pending pin) */}
         {!isPlaying && !pendingPin && !activePin && (
           <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            className="absolute inset-0 flex items-center justify-center"
             style={{ background: 'rgba(0,0,0,0.2)' }}
+            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
           >
-            <div className="w-16 h-16 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
               <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
