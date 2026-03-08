@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import FileUploader from './FileUploader';
-import GoogleDriveImporter from './GoogleDriveImporter';
+import CloudImportPanel from './CloudImportPanel';
 
 const fileStatusColors: Record<string, string> = {
   'draft': 'text-gray-500',
@@ -87,43 +87,48 @@ interface FileBrowserProps {
 
 export default function FileBrowser({ files, selectedFileId, onSelectFile, projectId, onUploadComplete }: FileBrowserProps) {
   const [showUploader, setShowUploader] = useState(false);
-  const [showDriveImporter, setShowDriveImporter] = useState(false);
+  const [showCloudImport, setShowCloudImport] = useState(false);
 
   return (
     <div className="flex flex-col h-full" style={{ background: '#0a0a0f' }}>
       <div className="px-4 py-3 flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>Files</h2>
         {projectId && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => { setShowDriveImporter((v) => !v); if (!showDriveImporter) setShowUploader(false); }}
-              title="Import from Google Drive"
-              className={`p-1 rounded-lg transition-colors ${showDriveImporter ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/>
-                <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L3.45 44.7c-.8 1.4-1.2 2.95-1.2 4.5h27.5L43.65 25z" fill="#00AC47"/>
-                <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L84.1 61.5c.8-1.4 1.2-2.95 1.2-4.5H57.8l6.85 11.85L73.55 76.8z" fill="#EA4335"/>
-                <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2H34.4c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832D"/>
-                <path d="M57.8 49.2H29.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h46.5c1.6 0 3.15-.45 4.5-1.2L57.8 49.2z" fill="#2684FC"/>
-                <path d="M73.4 26.5L60.65 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.6 25l14.2 24.2h27.45c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
-              </svg>
-            </button>
-            <button
-              onClick={() => { setShowUploader((v) => !v); if (!showUploader) setShowDriveImporter(false); }}
-              title="Upload files"
-              className="p-1 rounded-lg transition-colors"
-              style={showUploader ? { background: 'rgba(21,243,236,0.12)', color: '#15f3ec' } : { color: 'rgba(255,255,255,0.4)' }}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
+          <button
+            onClick={() => { setShowCloudImport((v) => !v); if (!showCloudImport) setShowUploader(false); }}
+            title="Import files"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+            style={showCloudImport
+              ? { background: 'linear-gradient(135deg, rgba(21,243,236,0.12), rgba(22,255,192,0.08))', border: '1px solid rgba(21,243,236,0.2)', color: '#15f3ec' }
+              : { border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }
+            }
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import
+          </button>
         )}
       </div>
 
-      {/* Upload panel */}
+      {/* Cloud import panel */}
+      {showCloudImport && projectId && (
+        <div className="flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
+          <CloudImportPanel
+            projectId={projectId}
+            onImportComplete={(imported: any[]) => {
+              imported.forEach((f) => onUploadComplete?.(f));
+              setShowCloudImport(false);
+            }}
+            onShowUpload={() => {
+              setShowCloudImport(false);
+              setShowUploader(true);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Direct upload panel */}
       {showUploader && projectId && (
         <div className="p-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
           <FileUploader
@@ -131,19 +136,6 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
             onUploadComplete={(file: any) => {
               onUploadComplete?.(file);
               setShowUploader(false);
-            }}
-          />
-        </div>
-      )}
-
-      {/* Google Drive import panel */}
-      {showDriveImporter && projectId && (
-        <div className="flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
-          <GoogleDriveImporter
-            projectId={projectId}
-            onImportComplete={(imported: any[]) => {
-              imported.forEach((f) => onUploadComplete?.(f));
-              setShowDriveImporter(false);
             }}
           />
         </div>
@@ -158,11 +150,11 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>No files yet</p>
             {projectId && (
               <button
-                onClick={() => setShowUploader(true)}
+                onClick={() => setShowCloudImport(true)}
                 className="mt-2 text-xs font-medium"
                 style={{ color: '#15f3ec' }}
               >
-                Upload first file →
+                Import from cloud storage &rarr;
               </button>
             )}
           </div>

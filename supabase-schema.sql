@@ -212,3 +212,37 @@ alter table public.client_project_access enable row level security;
 insert into public.subscription_tiers (name, max_clients, max_projects_per_client)
 values ('Starter', 5, 5), ('Professional', 20, 15), ('Business', 999999, 999999)
 on conflict (name) do nothing;
+
+-- ── Cloud Storage Integration ────────────────────────────────────────────────
+
+-- Add cloud storage columns to files table
+ALTER TABLE public.files
+  ADD COLUMN IF NOT EXISTS storage_type text DEFAULT 'local',
+  ADD COLUMN IF NOT EXISTS external_id text,
+  ADD COLUMN IF NOT EXISTS mime_type text;
+
+-- Unified cloud token storage (Google Drive, Dropbox, OneDrive)
+CREATE TABLE IF NOT EXISTS public.user_cloud_tokens (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  provider text NOT NULL,  -- 'google_drive', 'dropbox', 'onedrive'
+  access_token text NOT NULL,
+  refresh_token text,
+  token_expiry timestamptz,
+  account_email text,
+  account_name text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, provider)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_cloud_tokens_user_id ON public.user_cloud_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_cloud_tokens_provider ON public.user_cloud_tokens(user_id, provider);
+
+ALTER TABLE public.user_cloud_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Migrate existing Google Drive tokens (run once)
+-- INSERT INTO public.user_cloud_tokens (user_id, provider, access_token, refresh_token, token_expiry, account_email, updated_at)
+-- SELECT user_id, 'google_drive', access_token, refresh_token, token_expiry, google_email, updated_at
+-- FROM public.user_drive_tokens
+-- ON CONFLICT (user_id, provider) DO NOTHING;

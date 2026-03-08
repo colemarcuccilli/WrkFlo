@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
 import GoogleDriveConnect from '@/components/GoogleDriveConnect';
+import DropboxConnect from '@/components/DropboxConnect';
+import OneDriveConnect from '@/components/OneDriveConnect';
 import AppHeader from '@/components/AppHeader';
 
 const CYAN = '#15f3ec';
@@ -65,14 +67,19 @@ export default function SettingsPage() {
   const searchParams = useSearchParams();
   const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
 
-  // Show toast when redirected back from Google Drive OAuth
+  // Show toast when redirected back from OAuth
   useEffect(() => {
     const driveParam = searchParams.get('drive');
-    if (driveParam === 'connected') {
-      showToast('Google Drive connected successfully');
-    } else if (driveParam === 'error') {
-      showToast('Failed to connect Google Drive');
-    }
+    if (driveParam === 'connected') showToast('Google Drive connected successfully');
+    else if (driveParam === 'error') showToast('Failed to connect Google Drive');
+
+    const dropboxParam = searchParams.get('dropbox');
+    if (dropboxParam === 'connected') showToast('Dropbox connected successfully');
+    else if (dropboxParam === 'error') showToast('Failed to connect Dropbox');
+
+    const onedriveParam = searchParams.get('onedrive');
+    if (onedriveParam === 'connected') showToast('OneDrive connected successfully');
+    else if (onedriveParam === 'error') showToast('Failed to connect OneDrive');
   }, [searchParams]);
 
   useEffect(() => {
@@ -397,8 +404,15 @@ export default function SettingsPage() {
 
         {/* Integrations */}
         <div className="mb-6">
-          <h2 className="mb-3" style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>Integrations</h2>
-          <GoogleDriveConnect />
+          <h2 className="mb-3" style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>Cloud Storage</h2>
+          <p className="mb-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+            Connect your cloud storage to import files directly into projects.
+          </p>
+          <div className="space-y-3">
+            <GoogleDriveConnect />
+            <DropboxConnect />
+            <OneDriveConnect />
+          </div>
         </div>
 
         {/* Branding */}
