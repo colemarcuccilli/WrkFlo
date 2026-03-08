@@ -92,7 +92,7 @@ export default function CloudImportPanel({ projectId, onImportComplete, onShowUp
   return (
     <div>
       {/* Tabs */}
-      <div className="flex px-3 pt-3 gap-1">
+      <div className="flex flex-col px-3 pt-3 gap-1">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key
           const status = statuses[tab.key]

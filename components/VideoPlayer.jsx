@@ -26,6 +26,7 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
   const [pendingPin, setPendingPin] = useState(null); // { x, y, time }
   const [activePin, setActivePin] = useState(null); // comment id
   const [showPinHint, setShowPinHint] = useState(true);
+  const [videoError, setVideoError] = useState(false);
 
   // Seek handler for external components
   useEffect(() => {
@@ -45,6 +46,27 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     const timer = setTimeout(() => setShowPinHint(false), 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) setDuration(videoRef.current.duration);
+  };
+
+  const togglePlay = useCallback(() => {
+    if (!videoRef.current) return;
+    if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
+    setIsPlaying(!isPlaying);
+  }, [isPlaying]);
+
+  const toggleMute = useCallback(() => {
+    if (!videoRef.current) return;
+    const newMuted = !isMuted;
+    videoRef.current.muted = newMuted;
+    setIsMuted(newMuted);
+  }, [isMuted]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -88,27 +110,6 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [duration, isPlaying, togglePlay, toggleMute]);
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) setDuration(videoRef.current.duration);
-  };
-
-  const togglePlay = useCallback(() => {
-    if (!videoRef.current) return;
-    if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
-    setIsPlaying(!isPlaying);
-  }, [isPlaying]);
-
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return;
-    const newMuted = !isMuted;
-    videoRef.current.muted = newMuted;
-    setIsMuted(newMuted);
-  }, [isMuted]);
 
   // Click on video frame to place a spatial + temporal pin
   const handleVideoClick = useCallback((e) => {
@@ -219,7 +220,21 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
           onEnded={() => setIsPlaying(false)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onError={() => setVideoError(true)}
         />
+
+        {/* Video load error overlay */}
+        {videoError && (
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+            <div className="text-center">
+              <svg className="w-10 h-10 mx-auto mb-2" style={{ color: 'rgba(255,255,255,0.3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>Unable to load video</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>The cloud file may need reconnection</p>
+            </div>
+          </div>
+        )}
 
         {/* Play button overlay (only when paused and no pending pin) */}
         {!isPlaying && !pendingPin && !activePin && (
