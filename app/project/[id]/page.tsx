@@ -14,6 +14,7 @@ import CompletionCelebration from '@/components/CompletionCelebration';
 import VersionUpload from '@/components/VersionUpload';
 import FeedbackSummarizer from '@/components/FeedbackSummarizer';
 import RealtimeComments from '@/components/RealtimeComments';
+import RealtimeFiles from '@/components/RealtimeFiles';
 
 const CYAN = '#15f3ec';
 const BLUE = '#5bc7f9';
@@ -81,20 +82,54 @@ export default function ProjectPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showVersionUpload, setShowVersionUpload] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [updateBanner, setUpdateBanner] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchProject = useCallback(() => {
     fetch(`/api/projects/${projectId}`)
       .then((r) => r.json())
       .then((data) => {
         if (data && data.id) {
           const normalized = normalizeProject(data);
           setProject(normalized);
-          setSelectedFileId(normalized.files?.[0]?.id || null);
+          if (!selectedFileId) {
+            setSelectedFileId(normalized.files?.[0]?.id || null);
+          }
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, [projectId, selectedFileId]);
+
+  useEffect(() => {
+    fetchProject();
   }, [projectId]);
+
+  // Handle realtime file changes (client approves, requests changes, etc.)
+  const handleFileChanged = useCallback(({ fileId, newData, eventType }: { fileId: string; newData: any; eventType: string }) => {
+    if (eventType === 'INSERT') {
+      fetchProject();
+      return;
+    }
+    setProject((prev: any) => {
+      if (!prev) return prev;
+      const existingFile = prev.files.find((f: any) => f.id === fileId);
+      if (!existingFile) return prev;
+      // Status change from client
+      if (newData.status && newData.status !== existingFile.status) {
+        const statusLabel = newData.status === 'approved' ? 'Client approved' : newData.status === 'changes-requested' ? 'Client requested changes' : '';
+        if (statusLabel) setUpdateBanner(`${statusLabel} on ${existingFile.name}`);
+        return {
+          ...prev,
+          files: prev.files.map((f: any) =>
+            f.id === fileId
+              ? { ...f, status: newData.status, currentRound: newData.current_round || f.currentRound }
+              : f
+          ),
+        };
+      }
+      return prev;
+    });
+  }, [fetchProject]);
 
   const selectedFile = project?.files?.find((f: any) => f.id === selectedFileId) || project?.files?.[0];
   const fileComments = selectedFile?.comments || [];
@@ -412,6 +447,29 @@ export default function ProjectPage() {
         </div>
       </header>
 
+      {/* Realtime update banner */}
+      {updateBanner && (
+        <div
+          className="px-4 py-2.5 flex items-center justify-center gap-3"
+          style={{
+            background: 'linear-gradient(to right, rgba(22,255,192,0.1), rgba(21,243,236,0.1))',
+            borderBottom: '1px solid rgba(22,255,192,0.2)',
+          }}
+        >
+          <svg className="w-4 h-4 flex-shrink-0" style={{ color: MINT }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span className="text-sm font-medium" style={{ color: MINT }}>{updateBanner}</span>
+          <button
+            onClick={() => setUpdateBanner(null)}
+            className="ml-2 text-xs px-2 py-1 rounded transition-colors"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Completion Banner */}
       {isProjectComplete && (
         <div
@@ -540,6 +598,15 @@ export default function ProjectPage() {
       {showCelebration && project && (
         <CompletionCelebration project={project} onClose={() => setShowCelebration(false)} />
       )}
+      {/* Realtime — listen for file changes (client approvals, etc.) */}
+      {project && (
+        <RealtimeFiles
+          projectId={projectId}
+          fileIds={project.files.map((f: any) => f.id)}
+          onFileChanged={handleFileChanged}
+        />
+      )}
+
       {/* Realtime comment listener */}
       <RealtimeComments
         fileId={selectedFileId}

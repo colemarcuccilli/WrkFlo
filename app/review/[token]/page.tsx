@@ -11,6 +11,7 @@ import VersionHistory from '@/components/VersionHistory';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import MobileCommentSheet from '@/components/MobileCommentSheet';
 import RealtimeComments from '@/components/RealtimeComments';
+import RealtimeFiles from '@/components/RealtimeFiles';
 
 const CYAN = '#15f3ec';
 const BLUE = '#5bc7f9';
@@ -69,11 +70,12 @@ export default function ReviewPage() {
   const [allApproved, setAllApproved] = useState(false);
   const [showMobileComment, setShowMobileComment] = useState(false);
   const [authError, setAuthError] = useState(false);
+  const [updateBanner, setUpdateBanner] = useState<string | null>(null);
 
   // Get display name from authenticated user
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reviewer';
 
-  useEffect(() => {
+  const fetchProject = useCallback(() => {
     fetch(`/api/review/${token}`)
       .then((r) => {
         if (r.status === 401) {
@@ -91,12 +93,49 @@ export default function ReviewPage() {
         if (data && data.id) {
           const normalized = normalizeProject(data);
           setProject(normalized);
-          setSelectedFileId(normalized.files?.[0]?.id || null);
+          if (!selectedFileId) {
+            setSelectedFileId(normalized.files?.[0]?.id || null);
+          }
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, [token, selectedFileId]);
+
+  useEffect(() => {
+    fetchProject();
   }, [token]);
+
+  // Handle realtime file changes (new versions, status updates)
+  const handleFileChanged = useCallback(({ fileId, newData, eventType }: { fileId: string; newData: any; eventType: string }) => {
+    if (eventType === 'INSERT') {
+      setUpdateBanner('A new file was added to this project');
+      fetchProject();
+      return;
+    }
+    // Check if version changed (new version uploaded by creator)
+    setProject((prev: any) => {
+      if (!prev) return prev;
+      const existingFile = prev.files.find((f: any) => f.id === fileId);
+      if (existingFile && newData.version && newData.version !== existingFile.version) {
+        setUpdateBanner(`New version ${newData.version} uploaded — refreshing...`);
+        fetchProject();
+        return prev;
+      }
+      // Status change from the other side
+      if (existingFile && newData.status && newData.status !== existingFile.status) {
+        return {
+          ...prev,
+          files: prev.files.map((f: any) =>
+            f.id === fileId
+              ? { ...f, status: newData.status, currentRound: newData.current_round || f.currentRound }
+              : f
+          ),
+        };
+      }
+      return prev;
+    });
+  }, [fetchProject]);
 
   // Handle auth redirect
   useEffect(() => {
@@ -328,6 +367,29 @@ export default function ReviewPage() {
         </div>
       </div>
 
+      {/* Update banner — shown when creator uploads new version */}
+      {updateBanner && (
+        <div
+          className="px-4 py-2.5 flex items-center justify-center gap-3"
+          style={{
+            background: 'linear-gradient(to right, rgba(22,255,192,0.1), rgba(21,243,236,0.1))',
+            borderBottom: '1px solid rgba(22,255,192,0.2)',
+          }}
+        >
+          <svg className="w-4 h-4 flex-shrink-0" style={{ color: MINT }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="text-sm font-medium" style={{ color: MINT }}>{updateBanner}</span>
+          <button
+            onClick={() => setUpdateBanner(null)}
+            className="ml-2 text-xs px-2 py-1 rounded transition-colors"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {allApproved && (
         <CompletionCelebration project={project} onClose={() => setAllApproved(false)} />
       )}
@@ -444,6 +506,13 @@ export default function ReviewPage() {
         onSubmit={handleAddComment}
         disabled={selectedFile?.status === 'locked'}
         fileType={selectedFile?.type}
+      />
+
+      {/* Realtime — listen for file changes (new versions, status) */}
+      <RealtimeFiles
+        projectId={project.id}
+        fileIds={project.files.map((f: any) => f.id)}
+        onFileChanged={handleFileChanged}
       />
 
       {/* Realtime — listen for new comments from the creator side */}
