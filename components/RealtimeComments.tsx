@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useRef, useMemo } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 interface RealtimeCommentsProps {
   fileId: string | null;
@@ -21,6 +21,7 @@ function normalizeComment(c: any) {
 
 export default function RealtimeComments({ fileId, onNewComment }: RealtimeCommentsProps) {
   const channelRef = useRef<any>(null);
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!fileId) return;
@@ -58,7 +59,7 @@ export default function RealtimeComments({ fileId, onNewComment }: RealtimeComme
         channelRef.current = null;
       }
     };
-  }, [fileId, onNewComment]);
+  }, [fileId, onNewComment, supabase]);
 
   // This component renders nothing — it's purely functional
   return null;
