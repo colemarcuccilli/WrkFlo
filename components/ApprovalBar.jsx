@@ -1,4 +1,5 @@
 'use client';
+import { getVersionColor } from '@/lib/version-colors';
 
 const CYAN = '#15f3ec';
 const MINT = '#16ffc0';
@@ -141,20 +142,23 @@ export default function ApprovalBar({ file, onStatusChange, viewerRole = 'client
       </div>
 
       {/* ── Revision Round Badge ── */}
-      {currentRound > 1 && (
-        <div
-          className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg"
-          style={{ background: 'rgba(21,243,236,0.06)', border: '1px solid rgba(21,243,236,0.12)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={CYAN} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="23 4 23 10 17 10" />
-            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-          </svg>
-          <span className="text-xs font-medium" style={{ color: CYAN }}>
-            Revision Round {currentRound}
-          </span>
-        </div>
-      )}
+      {currentRound > 1 && (() => {
+        const roundColor = getVersionColor(currentRound);
+        return (
+          <div
+            className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg"
+            style={{ background: `${roundColor}10`, border: `1px solid ${roundColor}20` }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={roundColor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+            </svg>
+            <span className="text-xs font-medium" style={{ color: roundColor }}>
+              V{currentRound} · Revision Round {currentRound}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* ── Action Buttons ── */}
       {isLocked ? (

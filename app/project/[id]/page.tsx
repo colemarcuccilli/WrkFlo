@@ -493,6 +493,21 @@ export default function ProjectPage() {
             >
               View Summary
             </button>
+            {project?.reviewToken && (
+              <a
+                href={`/delivery/${project.reviewToken}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                style={{
+                  background: 'rgba(168,85,247,0.12)',
+                  color: '#a855f7',
+                  border: '1px solid rgba(168,85,247,0.25)',
+                }}
+              >
+                Delivery Page
+              </a>
+            )}
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import CloudImportPanel from './CloudImportPanel';
+import { getVersionColor, getVersionBg } from '@/lib/version-colors';
 
 const fileStatusColors: Record<string, string> = {
   'draft': 'text-gray-500',
@@ -174,7 +175,7 @@ export default function FileBrowser({ files, selectedFileId, onSelectFile, proje
 
                   <div className="flex items-center gap-2">
                     {/* Version badge */}
-                    <span className="px-1.5 py-0.5 text-xs rounded font-mono" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}>
+                    <span className="px-1.5 py-0.5 text-xs rounded font-mono" style={{ background: getVersionBg(file.version || 'V1'), color: getVersionColor(file.version || 'V1') }}>
                       {file.version || 'V1'}
                     </span>
 

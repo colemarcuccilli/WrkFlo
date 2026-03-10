@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { getVersionColor } from '@/lib/version-colors';
 
 const CYAN = '#15f3ec';
 const MINT = '#16ffc0';
@@ -249,7 +250,7 @@ export default function CommentFeed({ comments, fileType, onSeekToTimestamp, cur
     <div className="space-y-4">
       {rounds.map(({ round, comments: roundComments }) => {
         const isCurrent = round === currentRound;
-        const totalInRound = roundComments.length + comments.filter((c) => c.parentId && roundComments.some((rc) => rc.id === c.parentId)).length;
+        const roundColor = getVersionColor(round);
 
         return (
           <div key={round}>
@@ -258,9 +259,9 @@ export default function CommentFeed({ comments, fileType, onSeekToTimestamp, cur
               <div
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                 style={{
-                  background: isCurrent ? 'rgba(21,243,236,0.1)' : 'rgba(255,255,255,0.04)',
-                  color: isCurrent ? CYAN : 'rgba(255,255,255,0.4)',
-                  border: isCurrent ? '1px solid rgba(21,243,236,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                  background: isCurrent ? `${roundColor}18` : 'rgba(255,255,255,0.04)',
+                  color: isCurrent ? roundColor : 'rgba(255,255,255,0.4)',
+                  border: isCurrent ? `1px solid ${roundColor}35` : '1px solid rgba(255,255,255,0.06)',
                 }}
               >
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -283,7 +284,7 @@ export default function CommentFeed({ comments, fileType, onSeekToTimestamp, cur
               {isCurrent && (
                 <span
                   className="text-[10px] px-1.5 py-0.5 rounded"
-                  style={{ background: 'rgba(21,243,236,0.08)', color: CYAN }}
+                  style={{ background: `${roundColor}18`, color: roundColor }}
                 >
                   current
                 </span>
@@ -291,7 +292,7 @@ export default function CommentFeed({ comments, fileType, onSeekToTimestamp, cur
             </div>
 
             {/* Round comments */}
-            <div className="space-y-2 pl-2" style={{ borderLeft: `2px solid ${isCurrent ? 'rgba(21,243,236,0.15)' : 'rgba(255,255,255,0.04)'}` }}>
+            <div className="space-y-2 pl-2" style={{ borderLeft: `2px solid ${isCurrent ? `${roundColor}30` : 'rgba(255,255,255,0.04)'}` }}>
               {roundComments.map((comment) => (
                 <CommentCard
                   key={comment.id}

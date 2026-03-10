@@ -3,6 +3,7 @@ import { useState } from 'react';
 import GoogleDriveImporter from './GoogleDriveImporter';
 import DropboxImporter from './DropboxImporter';
 import OneDriveImporter from './OneDriveImporter';
+import { getVersionColor } from '@/lib/version-colors';
 
 type CloudProvider = 'choose' | 'google_drive' | 'dropbox' | 'onedrive';
 
@@ -112,11 +113,16 @@ export default function VersionUpload({ fileId, fileName, currentVersion, projec
 
         <div className="p-6 space-y-4">
           {/* Version info banner */}
-          <div className="rounded-lg p-3" style={{ background: 'rgba(21,243,236,0.08)', border: '1px solid rgba(21,243,236,0.2)' }}>
-            <p className="text-xs" style={{ color: '#15f3ec' }}>
-              <span className="font-semibold">Uploading as {nextVersionLabel}</span> — status resets to "In Review". Previous feedback is preserved in Round {currentVersionNum}.
-            </p>
-          </div>
+          {(() => {
+            const nextColor = getVersionColor(currentVersionNum + 1);
+            return (
+              <div className="rounded-lg p-3" style={{ background: `${nextColor}14`, border: `1px solid ${nextColor}30` }}>
+                <p className="text-xs" style={{ color: nextColor }}>
+                  <span className="font-semibold">Uploading as {nextVersionLabel}</span> — status resets to &ldquo;In Review&rdquo;. Previous feedback is preserved in Round {currentVersionNum}.
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Provider selection */}
           {provider === 'choose' && (
