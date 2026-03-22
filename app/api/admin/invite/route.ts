@@ -4,6 +4,8 @@ import { createServiceClient } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
 import { Resend } from 'resend'
 
+export const dynamic = "force-dynamic"
+
 const resend = new Resend(process.env.RESEND_KEY)
 
 export async function GET() {

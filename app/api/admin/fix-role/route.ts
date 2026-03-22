@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = "force-dynamic"
+
 // Temporary admin endpoint to fix creator role
 // Only the authenticated user can fix their own role
 export async function POST(req: NextRequest) {
