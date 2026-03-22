@@ -57,8 +57,13 @@ export default function VideoPlayer({ file, comments, onAddComment, onSeekToComm
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
-    if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play().catch(() => {
+        // Browser may reject play() if media isn't ready yet — ignore
+      });
+    }
   }, [isPlaying]);
 
   const toggleMute = useCallback(() => {
