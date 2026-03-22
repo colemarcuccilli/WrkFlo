@@ -8,12 +8,19 @@ export default function ShareModal({ project, onClose, onSetPassword = null }) {
   const [assignedIds, setAssignedIds] = useState(new Set());
   const [loadingClients, setLoadingClients] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [passwordEnabled, setPasswordEnabled] = useState(!!project.review_password);
+  const [passwordValue, setPasswordValue] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordStatus, setPasswordStatus] = useState(project.review_password ? 'set' : 'none'); // 'none' | 'set' | 'saved'
 
-  const reviewUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/review/${project.reviewToken || project.review_token}`
-    : `/review/${project.reviewToken || project.review_token}`;
+  const token = project.reviewToken || project.review_token;
+  const reviewUrl = token
+    ? (typeof window !== 'undefined' ? `${window.location.origin}/review/${token}` : `/review/${token}`)
+    : null;
 
-  const prewrittenMessage = `Hey! I've finished your ${project.name} and it's ready for your review.\n\nClick here to view the files, leave comments, and approve: ${reviewUrl}\n\nSign in with your account to access the review. Let me know if you have any questions!`;
+  const prewrittenMessage = reviewUrl
+    ? `Hey! I've finished your ${project.name} and it's ready for your review.\n\nClick here to view the files, leave comments, and approve: ${reviewUrl}\n\nSign in with your account to access the review. Let me know if you have any questions!`
+    : `Review link is being generated for ${project.name}. Please try again in a moment.`;
 
   useEffect(() => {
     // Fetch creator's clients and which ones have access to this project
@@ -155,6 +162,12 @@ export default function ShareModal({ project, onClose, onSetPassword = null }) {
         {/* Review link */}
         <div className="mb-4">
           <p className="text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>Review Link</p>
+          {!reviewUrl ? (
+            <div className="rounded-lg p-3" style={{ background: 'rgba(255,80,80,0.06)', border: '1px solid rgba(255,80,80,0.15)' }}>
+              <p className="text-xs" style={{ color: '#ff6b6b' }}>Review token not found. Try refreshing the page or recreating this project.</p>
+            </div>
+          ) : (
+          <>
           <div className="flex items-center gap-2 rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <span className="flex-1 text-sm truncate font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{reviewUrl}</span>
             <button
@@ -184,6 +197,97 @@ export default function ShareModal({ project, onClose, onSetPassword = null }) {
             </button>
           </div>
           <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Clients must be signed in to access the review</p>
+          </>
+          )}
+        </div>
+
+        {/* Password Protection */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>Password Protection</p>
+            {passwordStatus === 'set' || passwordStatus === 'saved' ? (
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(21,243,236,0.12)', color: '#15f3ec' }}>Protected</span>
+            ) : (
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>No password</span>
+            )}
+          </div>
+          <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <button
+                type="button"
+                onClick={async () => {
+                  const newEnabled = !passwordEnabled;
+                  setPasswordEnabled(newEnabled);
+                  if (!newEnabled && (passwordStatus === 'set' || passwordStatus === 'saved')) {
+                    setPasswordSaving(true);
+                    try {
+                      await fetch(`/api/projects/${project.id}/password`, { method: 'DELETE' });
+                      setPasswordStatus('none');
+                      setPasswordValue('');
+                    } catch {}
+                    setPasswordSaving(false);
+                  }
+                }}
+                className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
+                style={{ background: passwordEnabled ? '#15f3ec' : 'rgba(255,255,255,0.15)' }}
+              >
+                <div
+                  className="absolute top-0.5 w-4 h-4 rounded-full transition-all"
+                  style={{
+                    background: passwordEnabled ? '#0a0a0f' : 'rgba(255,255,255,0.4)',
+                    left: passwordEnabled ? '18px' : '2px',
+                  }}
+                />
+              </button>
+              <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Require password to access review</span>
+            </label>
+            {passwordEnabled && (
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  placeholder={passwordStatus === 'set' || passwordStatus === 'saved' ? 'Enter new password to change' : 'Enter a password'}
+                  className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.9)',
+                  }}
+                />
+                <button
+                  onClick={async () => {
+                    if (!passwordValue.trim()) return;
+                    setPasswordSaving(true);
+                    try {
+                      const res = await fetch(`/api/projects/${project.id}/password`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: passwordValue.trim() }),
+                      });
+                      if (res.ok) {
+                        setPasswordStatus('saved');
+                        setPasswordValue('');
+                      }
+                    } catch {}
+                    setPasswordSaving(false);
+                  }}
+                  disabled={passwordSaving || !passwordValue.trim()}
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0"
+                  style={{
+                    background: passwordValue.trim() ? '#15f3ec' : 'rgba(255,255,255,0.06)',
+                    color: passwordValue.trim() ? '#0a0a0f' : 'rgba(255,255,255,0.3)',
+                    opacity: passwordSaving ? 0.7 : 1,
+                  }}
+                >
+                  {passwordSaving ? '...' : 'Set'}
+                </button>
+              </div>
+            )}
+            {passwordEnabled && passwordStatus === 'saved' && !passwordValue && (
+              <p className="text-xs mt-2" style={{ color: '#16ffc0' }}>Password saved successfully</p>
+            )}
+          </div>
         </div>
 
         {/* Pre-written message */}

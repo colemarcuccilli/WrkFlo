@@ -1,0 +1,5 @@
+const ADMIN_EMAILS = ['cole@marcuccilli.com']
+
+export function isAdmin(email: string | undefined | null): boolean {
+  return !!email && ADMIN_EMAILS.includes(email.toLowerCase())
+}

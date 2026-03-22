@@ -62,13 +62,25 @@ export default function ProjectCard({ project }) {
               {client}
             </p>
           </div>
-          <span
-            className="ml-3 flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium"
-            style={badgeStyle}
-          >
-            {project.status}
-          </span>
-          {progressPct === 100 && (
+          {project.status === 'Approved' ? (
+            <span
+              className="ml-3 flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1"
+              style={{ background: 'rgba(22,255,192,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.25)' }}
+            >
+              <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+              Complete
+            </span>
+          ) : (
+            <span
+              className="ml-3 flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium"
+              style={badgeStyle}
+            >
+              {project.status}
+            </span>
+          )}
+          {progressPct === 100 && project.status !== 'Approved' && (
             <span
               className="ml-2 flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium"
               style={{
@@ -77,7 +89,7 @@ export default function ProjectCard({ project }) {
                 border: '1px solid rgba(22,255,192,0.2)',
               }}
             >
-              ✓ Complete
+              &#10003; Complete
             </span>
           )}
         </div>

@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import GlobalSearch from '@/components/GlobalSearch';
+import { isAdmin } from '@/lib/admin';
 
 const CYAN = '#15f3ec';
 const MINT = '#16ffc0';
@@ -63,7 +65,34 @@ export default function AppHeader() {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/projects/new">
+          {isAdmin(user?.email) && (
+            <Link href="/admin" style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8,
+              background: 'rgba(21,243,236,0.06)', border: '1px solid rgba(21,243,236,0.15)',
+              color: CYAN, fontSize: 12, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              Admin
+            </Link>
+          )}
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(21,243,236,0.3)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+          >
+            <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span style={{ fontSize: 11, opacity: 0.7 }}>&#8984;K</span>
+          </button>
+          <Link href="/projects/new" data-onboarding="new-project">
             <button style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8,
               background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
@@ -86,6 +115,7 @@ export default function AppHeader() {
           </div>
         </div>
       </div>
+      <GlobalSearch />
     </header>
   );
 }

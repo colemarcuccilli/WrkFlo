@@ -5,12 +5,15 @@ import ProjectCard from '@/components/ProjectCard';
 import ActivityFeed from '@/components/ActivityFeed';
 import { useAuth } from '@/components/AuthProvider';
 import AppHeader from '@/components/AppHeader';
+import OnboardingTooltips from '@/components/OnboardingTooltips';
 
 function normalizeProject(p: any) {
+  // BUG-018: Resolve creator name from joined user data or denormalized field
+  const creatorName = p.creator_name || p.creator?.name || p.creator?.email?.split('@')[0] || 'Creator';
   return {
     ...p,
     client: p.client_name || p.client || 'Unknown Client',
-    creatorName: p.creator_name || 'Creator',
+    creatorName,
     lastActivity: p.updated_at ? new Date(p.updated_at).toLocaleDateString() : 'Recently',
     files: (p.files || []).map((f: any) => ({
       ...f,
@@ -61,6 +64,7 @@ export default function DashboardPage() {
   }, []);
 
   const filters = ['All', 'In Review', 'Changes Requested', 'Approved', 'Draft'];
+  const filterLabels: Record<string, string> = { 'Approved': 'Completed' };
 
   const filtered = projects
     .filter((p) => filter === 'All' || p.status === filter)
@@ -90,6 +94,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen" style={{ background: BG, color: '#fff' }}>
       <AppHeader />
+      <OnboardingTooltips step="dashboard" />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* ── Page heading ──────────────────────────── */}
@@ -178,7 +183,7 @@ export default function DashboardPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                className="flex-shrink-0 inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all"
                 style={
                   isActive
                     ? {
@@ -205,7 +210,12 @@ export default function DashboardPage() {
                   }
                 }}
               >
-                {f}
+                {f === 'Approved' && (
+                  <svg style={{ width: 14, height: 14, marginRight: 4 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {filterLabels[f] || f}
               </button>
             );
           })}
@@ -250,7 +260,64 @@ export default function DashboardPage() {
                   Retry
                 </button>
               </div>
+            ) : projects.length === 0 ? (
+              /* ── First-time empty state ─────────────── */
+              <div
+                className="flex flex-col items-center justify-center py-16 rounded-2xl text-center px-6"
+                style={{
+                  background: cardBg,
+                  border: `1px solid ${cardBorder}`,
+                }}
+              >
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6"
+                  style={{ background: 'rgba(21,243,236,0.08)', border: '1px solid rgba(21,243,236,0.15)' }}
+                >
+                  <svg style={{ width: 40, height: 40, color: CYAN }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold mb-2" style={{ color: textHeading }}>Welcome to WrkFlo</h2>
+                <p className="text-sm mb-6 max-w-sm" style={{ color: textBody }}>
+                  Upload your first creative project and share it with your client for review.
+                </p>
+                <Link
+                  href="/projects/new"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+                    color: '#0a0a0f',
+                    boxShadow: `0 4px 20px rgba(21,243,236,0.3)`,
+                  }}
+                >
+                  Create Your First Project
+                  <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+                <div className="grid grid-cols-3 gap-4 mt-10 w-full max-w-md">
+                  {[
+                    { step: '1', title: 'Upload Files', desc: 'Add your creative assets', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
+                    { step: '2', title: 'Share Link', desc: 'Send to your client', icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z' },
+                    { step: '3', title: 'Get Approved', desc: 'Receive feedback live', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                  ].map((item) => (
+                    <div key={item.step} className="text-center p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2"
+                        style={{ background: 'rgba(21,243,236,0.1)' }}
+                      >
+                        <svg style={{ width: 16, height: 16, color: CYAN }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                        </svg>
+                      </div>
+                      <p className="text-xs font-semibold mb-0.5" style={{ color: textHeading }}>{item.title}</p>
+                      <p className="text-[10px]" style={{ color: textLabel }}>{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : filtered.length === 0 ? (
+              /* ── Filter empty state ─────────────────── */
               <div
                 className="flex flex-col items-center justify-center py-16 rounded-2xl text-center"
                 style={{
@@ -258,14 +325,52 @@ export default function DashboardPage() {
                   border: `1px solid ${cardBorder}`,
                 }}
               >
-                <p style={{ color: textMuted }}>No projects with status &ldquo;{filter}&rdquo;</p>
+                <svg style={{ width: 32, height: 32, color: textLabel, marginBottom: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <p className="text-sm font-medium mb-1" style={{ color: textBody }}>No projects with status &ldquo;{filter}&rdquo;</p>
+                <p className="text-xs" style={{ color: textLabel }}>Try selecting a different filter above</p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {filtered.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
-              </div>
+              <>
+                {/* ── Active projects ──────────────────── */}
+                {filter === 'All' && filtered.some((p) => p.status === 'Approved') && filtered.some((p) => p.status !== 'Approved') && (
+                  <>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {filtered.filter((p) => p.status !== 'Approved').map((project) => (
+                        <ProjectCard key={project.id} project={project} />
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3 my-6">
+                      <div className="flex-1 h-px" style={{ background: 'rgba(22,255,192,0.15)' }} />
+                      <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'rgba(22,255,192,0.5)' }}>
+                        <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Completed
+                      </span>
+                      <div className="flex-1 h-px" style={{ background: 'rgba(22,255,192,0.15)' }} />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {filtered.filter((p) => p.status === 'Approved').map((project) => (
+                        <div key={project.id} style={{ opacity: 0.8 }}>
+                          <ProjectCard project={project} />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {/* ── When not showing both active + completed split ── */}
+                {!(filter === 'All' && filtered.some((p) => p.status === 'Approved') && filtered.some((p) => p.status !== 'Approved')) && (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {filtered.map((project) => (
+                      <div key={project.id} style={{ opacity: (filter === 'Approved' || project.status === 'Approved') ? 0.8 : 1 }}>
+                        <ProjectCard project={project} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -288,7 +393,7 @@ export default function DashboardPage() {
                   Quick Review Links
                 </h3>
                 <div className="space-y-2">
-                  {projects.slice(0, 3).map((p) => (
+                  {projects.filter((p) => p.review_token || p.reviewToken).slice(0, 3).map((p) => (
                     <Link
                       key={p.id}
                       href={`/review/${p.review_token || p.reviewToken}`}

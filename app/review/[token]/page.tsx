@@ -71,12 +71,22 @@ export default function ReviewPage() {
   const [showMobileComment, setShowMobileComment] = useState(false);
   const [authError, setAuthError] = useState(false);
   const [updateBanner, setUpdateBanner] = useState<string | null>(null);
+  const [mobilePanel, setMobilePanel] = useState<'files' | 'preview' | 'feedback'>('preview');
+  const [passwordRequired, setPasswordRequired] = useState(false);
+  const [passwordProjectName, setPasswordProjectName] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Get display name from authenticated user
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Reviewer';
 
-  const fetchProject = useCallback(() => {
-    fetch(`/api/review/${token}`)
+  const fetchProject = useCallback((passwordOverride?: string) => {
+    const headers: Record<string, string> = {};
+    const storedPw = passwordOverride || (typeof window !== 'undefined' ? sessionStorage.getItem(`wrkflo-review-pw-${token}`) : null);
+    if (storedPw) headers['X-Review-Password'] = storedPw;
+
+    fetch(`/api/review/${token}`, { headers })
       .then((r) => {
         if (r.status === 401) {
           setAuthError(true);
@@ -90,7 +100,16 @@ export default function ReviewPage() {
         return r.json();
       })
       .then((data) => {
-        if (data && data.id) {
+        if (!data) return;
+        if (data.passwordRequired) {
+          setPasswordRequired(true);
+          setPasswordProjectName(data.projectName || '');
+          if (data.error) setPasswordError(data.error);
+          setLoading(false);
+          return;
+        }
+        if (data.id) {
+          setPasswordRequired(false);
           const normalized = normalizeProject(data);
           setProject(normalized);
           if (!selectedFileId) {
@@ -137,6 +156,36 @@ export default function ReviewPage() {
     });
   }, [fetchProject]);
 
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordInput.trim()) return;
+    setPasswordLoading(true);
+    setPasswordError('');
+    const pw = passwordInput.trim();
+    const headers: Record<string, string> = { 'X-Review-Password': pw };
+    try {
+      const r = await fetch(`/api/review/${token}`, { headers });
+      const data = await r.json();
+      if (data.passwordRequired) {
+        setPasswordError(data.error || 'Incorrect password');
+        setPasswordLoading(false);
+        return;
+      }
+      if (data.id) {
+        sessionStorage.setItem(`wrkflo-review-pw-${token}`, pw);
+        setPasswordRequired(false);
+        const normalized = normalizeProject(data);
+        setProject(normalized);
+        if (!selectedFileId) {
+          setSelectedFileId(normalized.files?.[0]?.id || null);
+        }
+      }
+    } catch {
+      setPasswordError('Something went wrong. Try again.');
+    }
+    setPasswordLoading(false);
+  };
+
   // Handle auth redirect
   useEffect(() => {
     if (authError) {
@@ -163,6 +212,73 @@ export default function ReviewPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
         <div className="text-center">
           <p style={{ color: TEXT_SECONDARY }}>Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (passwordRequired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+        <div
+          className="w-full max-w-sm rounded-2xl p-8 text-center"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: `linear-gradient(135deg, ${CYAN}, ${MINT})` }}
+          >
+            <svg className="w-5 h-5" style={{ color: BG }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold mb-1" style={{ color: TEXT_PRIMARY }}>Password Required</h2>
+          {passwordProjectName && (
+            <p className="text-sm mb-5" style={{ color: TEXT_SECONDARY }}>
+              Enter the password to access <span className="font-medium" style={{ color: TEXT_PRIMARY }}>{passwordProjectName}</span>
+            </p>
+          )}
+          {!passwordProjectName && (
+            <p className="text-sm mb-5" style={{ color: TEXT_SECONDARY }}>This review link is password protected</p>
+          )}
+          <form onSubmit={handlePasswordSubmit}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(''); }}
+              placeholder="Enter password"
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all mb-3"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: passwordError ? '1px solid rgba(255,80,80,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                color: TEXT_PRIMARY,
+              }}
+            />
+            {passwordError && (
+              <p className="text-xs mb-3 text-left" style={{ color: '#ff5050' }}>{passwordError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={passwordLoading || !passwordInput.trim()}
+              className="w-full py-3 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: passwordInput.trim() ? `linear-gradient(135deg, ${CYAN}, ${MINT})` : 'rgba(255,255,255,0.06)',
+                color: passwordInput.trim() ? BG : TEXT_TERTIARY,
+                opacity: passwordLoading ? 0.7 : 1,
+              }}
+            >
+              {passwordLoading ? 'Verifying...' : 'Access Review'}
+            </button>
+          </form>
+          <p className="text-xs mt-4" style={{ color: TEXT_TERTIARY }}>
+            Powered by <span style={{ color: CYAN }}>WrkFlo</span>
+          </p>
         </div>
       </div>
     );
@@ -394,9 +510,27 @@ export default function ReviewPage() {
         <CompletionCelebration project={project} onClose={() => setAllApproved(false)} />
       )}
 
-      <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
+      <div className="flex flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 68px)' }}>
+        {/* File browser sidebar -- mobile fullscreen overlay, hidden on tablet, fixed on desktop */}
         <div
-          className="w-60 flex-shrink-0 overflow-hidden flex flex-col"
+          className={`
+            ${mobilePanel === 'files' ? 'flex' : 'hidden'}
+            md:hidden
+            absolute inset-0 z-20 flex-col
+          `}
+          style={{ background: BG }}
+        >
+          <FileBrowser
+            files={project.files}
+            selectedFileId={selectedFileId}
+            onSelectFile={(file: any) => {
+              handleFileSelect(file);
+              setMobilePanel('preview');
+            }}
+          />
+        </div>
+        <div
+          className="hidden md:flex w-60 flex-shrink-0 overflow-hidden flex-col"
           style={{ background: BG, borderRight: `1px solid ${CARD_BORDER}` }}
         >
           <FileBrowser
@@ -406,7 +540,14 @@ export default function ReviewPage() {
           />
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col" style={{ background: BG }}>
+        {/* Preview panel */}
+        <div
+          className={`
+            ${mobilePanel === 'preview' ? 'flex' : 'hidden'}
+            md:flex flex-1 overflow-hidden flex-col
+          `}
+          style={{ background: BG }}
+        >
           {selectedFile && (
             <div
               className="flex items-center gap-3 px-4 py-2.5 flex-shrink-0"
@@ -428,8 +569,14 @@ export default function ReviewPage() {
           </div>
         </div>
 
+        {/* Feedback panel */}
         <div
-          className="w-80 flex-shrink-0 flex flex-col overflow-hidden"
+          className={`
+            ${mobilePanel === 'feedback' ? 'flex' : 'hidden'}
+            md:flex
+            absolute inset-0 z-20 md:relative md:inset-auto
+            md:w-80 flex-shrink-0 flex-col overflow-hidden
+          `}
           style={{ background: BG, borderLeft: `1px solid ${CARD_BORDER}` }}
         >
           <div
@@ -473,7 +620,7 @@ export default function ReviewPage() {
           </div>
 
           <div
-            className="px-4 pb-4 pt-2 flex-shrink-0"
+            className="px-4 pb-16 md:pb-4 pt-2 flex-shrink-0"
             style={{ borderTop: `1px solid ${CARD_BORDER}` }}
           >
             <CommentInput
@@ -484,21 +631,78 @@ export default function ReviewPage() {
           </div>
         </div>
       </div>
-      {/* Mobile floating comment button */}
-      <button
-        onClick={() => setShowMobileComment(true)}
-        className="fixed bottom-6 right-6 z-30 md:hidden flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-full transition-all active:scale-95"
+
+      {/* Mobile tab bar */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around"
         style={{
-          background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
-          color: BG,
-          boxShadow: `0 10px 25px -5px rgba(21,243,236,0.3)`,
+          background: '#0a0a0f',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-        </svg>
-        Comment
-      </button>
+        {([
+          { key: 'files' as const, label: 'Files', icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          )},
+          { key: 'preview' as const, label: 'Preview', icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          )},
+          { key: 'feedback' as const, label: 'Feedback', icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          )},
+        ]).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setMobilePanel(tab.key)}
+            className="flex flex-col items-center gap-0.5 py-2 px-4 transition-colors relative"
+            style={{
+              color: mobilePanel === tab.key ? '#15f3ec' : 'rgba(255,255,255,0.4)',
+              ...(mobilePanel === tab.key ? {
+                background: 'linear-gradient(to top, rgba(21,243,236,0.12), transparent)',
+              } : {}),
+            }}
+          >
+            <div style={mobilePanel === tab.key ? {
+              filter: 'drop-shadow(0 0 6px rgba(21,243,236,0.5))',
+            } : {}}>
+              {tab.icon}
+            </div>
+            <span className="text-[10px] font-medium">{tab.label}</span>
+            {mobilePanel === tab.key && (
+              <div
+                className="absolute top-0 w-8 h-0.5 rounded-full"
+                style={{ background: 'linear-gradient(to right, #15f3ec, #16ffc0)' }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Mobile floating comment button -- only show on preview tab */}
+      {mobilePanel === 'preview' && (
+        <button
+          onClick={() => setShowMobileComment(true)}
+          className="fixed bottom-16 right-6 z-30 md:hidden flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-full transition-all active:scale-95"
+          style={{
+            background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
+            color: BG,
+            boxShadow: `0 10px 25px -5px rgba(21,243,236,0.3)`,
+          }}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          Comment
+        </button>
+      )}
 
       <MobileCommentSheet
         isOpen={showMobileComment}

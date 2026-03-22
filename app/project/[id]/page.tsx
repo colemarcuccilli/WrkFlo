@@ -15,6 +15,7 @@ import VersionUpload from '@/components/VersionUpload';
 import FeedbackSummarizer from '@/components/FeedbackSummarizer';
 import RealtimeComments from '@/components/RealtimeComments';
 import RealtimeFiles from '@/components/RealtimeFiles';
+import OnboardingTooltips from '@/components/OnboardingTooltips';
 
 const CYAN = '#15f3ec';
 const BLUE = '#5bc7f9';
@@ -83,6 +84,7 @@ export default function ProjectPage() {
   const [showVersionUpload, setShowVersionUpload] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [updateBanner, setUpdateBanner] = useState<string | null>(null);
+  const [mobilePanel, setMobilePanel] = useState<'files' | 'preview' | 'feedback'>('preview');
 
   const fetchProject = useCallback(() => {
     fetch(`/api/projects/${projectId}`)
@@ -346,6 +348,7 @@ export default function ProjectPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: BG }}>
+      <OnboardingTooltips step="project" />
       {/* Top bar */}
       <header
         className="backdrop-blur-sm sticky top-0 z-40 flex-shrink-0"
@@ -373,26 +376,26 @@ export default function ProjectPage() {
             </span>
           </Link>
 
-          <svg className="w-4 h-4 flex-shrink-0" style={{ color: TEXT_TERTIARY }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 flex-shrink-0 hidden md:block" style={{ color: TEXT_TERTIARY }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
 
           <div className="flex items-center gap-2 min-w-0">
             <Link
               href="/dashboard"
-              className="text-sm transition-colors flex-shrink-0"
+              className="text-sm transition-colors flex-shrink-0 hidden md:block"
               style={{ color: TEXT_SECONDARY }}
             >
               Dashboard
             </Link>
-            <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: TEXT_TERTIARY }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 flex-shrink-0 hidden md:block" style={{ color: TEXT_TERTIARY }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <span className="text-sm font-medium truncate" style={{ color: TEXT_PRIMARY }}>{project.name}</span>
           </div>
 
           <span
-            className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium"
+            className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium hidden sm:inline-flex"
             style={badgeStyle}
           >
             {project.status}
@@ -414,6 +417,7 @@ export default function ProjectPage() {
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             <span className="text-xs hidden md:block" style={{ color: TEXT_SECONDARY }}>{project.client}</span>
             <button
+              data-onboarding="share-client"
               onClick={() => setShowShare(true)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
               style={{
@@ -425,7 +429,8 @@ export default function ProjectPage() {
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              Share with Client
+              <span className="hidden sm:inline">Share with Client</span>
+              <span className="sm:hidden">Share</span>
             </button>
             <button
               onClick={() => {
@@ -513,9 +518,29 @@ export default function ProjectPage() {
       )}
 
       {/* 3-panel layout */}
-      <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
+      <div className="flex flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 56px)' }}>
+        {/* File browser sidebar — hidden on mobile, collapsible drawer on tablet, fixed on desktop */}
         <div
-          className="w-60 flex-shrink-0 overflow-hidden flex flex-col"
+          className={`
+            ${mobilePanel === 'files' ? 'flex' : 'hidden'}
+            md:hidden
+            absolute inset-0 z-20 flex-col
+          `}
+          style={{ background: BG }}
+        >
+          <FileBrowser
+            files={project.files}
+            selectedFileId={selectedFileId}
+            onSelectFile={(file: any) => {
+              handleFileSelect(file);
+              setMobilePanel('preview');
+            }}
+            projectId={projectId}
+            onUploadComplete={handleUploadComplete}
+          />
+        </div>
+        <div
+          className="hidden md:flex w-60 flex-shrink-0 overflow-hidden flex-col"
           style={{ background: BG, borderRight: `1px solid ${CARD_BORDER}` }}
         >
           <FileBrowser
@@ -527,7 +552,14 @@ export default function ProjectPage() {
           />
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col" style={{ background: BG }}>
+        {/* Preview panel — always visible on md+, conditionally on mobile */}
+        <div
+          className={`
+            ${mobilePanel === 'preview' ? 'flex' : 'hidden'}
+            md:flex flex-1 overflow-hidden flex-col
+          `}
+          style={{ background: BG }}
+        >
           {selectedFile && (
             <div
               className="flex items-center gap-3 px-4 py-2.5 flex-shrink-0"
@@ -564,11 +596,17 @@ export default function ProjectPage() {
           </div>
         </div>
 
+        {/* Feedback panel — hidden on mobile, shown on md+  */}
         <div
-          className="w-80 flex-shrink-0 flex flex-col overflow-hidden"
+          className={`
+            ${mobilePanel === 'feedback' ? 'flex' : 'hidden'}
+            md:flex
+            absolute inset-0 z-20 md:relative md:inset-auto
+            md:w-80 flex-shrink-0 flex-col overflow-hidden
+          `}
           style={{ background: BG, borderLeft: `1px solid ${CARD_BORDER}` }}
         >
-          <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${CARD_BORDER}` }}>
+          <div data-onboarding="comment-panel" className="px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${CARD_BORDER}` }}>
             <h2 className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>Feedback</h2>
             <p className="text-xs mt-0.5" style={{ color: TEXT_SECONDARY }}>
               {fileComments.length} comment{fileComments.length !== 1 ? 's' : ''}
@@ -597,13 +635,67 @@ export default function ProjectPage() {
             />
           </div>
 
-          <div className="px-4 pb-4 pt-2 flex-shrink-0" style={{ borderTop: `1px solid ${CARD_BORDER}` }}>
+          <div className="px-4 pb-16 md:pb-4 pt-2 flex-shrink-0" style={{ borderTop: `1px solid ${CARD_BORDER}` }}>
             <CommentInput
               onSubmit={handleAddComment}
               disabled={selectedFile?.status === 'locked'}
             />
           </div>
         </div>
+      </div>
+
+      {/* Mobile tab bar */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around"
+        style={{
+          background: '#0a0a0f',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        {[
+          { key: 'files' as const, label: 'Files', icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          )},
+          { key: 'preview' as const, label: 'Preview', icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          )},
+          { key: 'feedback' as const, label: 'Feedback', icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          )},
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setMobilePanel(tab.key)}
+            className="flex flex-col items-center gap-0.5 py-2 px-4 transition-colors relative"
+            style={{
+              color: mobilePanel === tab.key ? '#15f3ec' : 'rgba(255,255,255,0.4)',
+              ...(mobilePanel === tab.key ? {
+                background: 'linear-gradient(to top, rgba(21,243,236,0.12), transparent)',
+              } : {}),
+            }}
+          >
+            <div style={mobilePanel === tab.key ? {
+              filter: 'drop-shadow(0 0 6px rgba(21,243,236,0.5))',
+            } : {}}>
+              {tab.icon}
+            </div>
+            <span className="text-[10px] font-medium">{tab.label}</span>
+            {mobilePanel === tab.key && (
+              <div
+                className="absolute top-0 w-8 h-0.5 rounded-full"
+                style={{ background: 'linear-gradient(to right, #15f3ec, #16ffc0)' }}
+              />
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Share Modal */}

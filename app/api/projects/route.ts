@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient()
 
-  const selectQuery = `*, files (id, name, type, version, status, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, created_at))`
+  const selectQuery = `*, creator:users!projects_creator_id_fkey(name, email), files (id, name, type, version, status, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, created_at))`
 
   if (user) {
     // Check user role
@@ -68,13 +68,25 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient()
   const body = await req.json()
+
+  // BUG-018: Get creator name from users table
+  const { data: creatorProfile } = await supabase
+    .from('users')
+    .select('name, email')
+    .eq('id', user.id)
+    .single()
+  const creatorName = creatorProfile?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Creator'
+
   const { data, error } = await supabase
     .from('projects')
     .insert({
       name: body.name,
       creator_id: user.id,
+      creator_name: creatorName,
       status: body.status || 'Draft',
       client_name: body.client_name,
+      description: body.description || null,
+      due_date: body.due_date || null,
     })
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

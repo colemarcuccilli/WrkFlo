@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { createClient } from '@/lib/supabase/server'
 
+// Same hash function used in password route
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password + 'wrkflo-review-salt')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
   const supabaseAuth = await createClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
@@ -15,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
 
   const supabase = createServiceClient()
 
-  // Fetch the project by review token
+  // Fetch the project by review token (include review_password)
   const { data, error } = await supabase
     .from('projects')
     .select(`*, files (id, name, type, version, status, current_round, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, revision_round, created_at))`)
@@ -33,9 +42,22 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
 
   const role = profile?.role || 'creator'
 
-  // If creator and owns the project, allow (preview mode)
+  // If creator and owns the project, skip password check (preview mode)
   if (role === 'creator' && data.creator_id === user.id) {
-    return NextResponse.json(data)
+    const { review_password, ...safeData } = data
+    return NextResponse.json(safeData)
+  }
+
+  // Password protection check for non-creators
+  if (data.review_password) {
+    const providedPassword = req.headers.get('X-Review-Password')
+    if (!providedPassword) {
+      return NextResponse.json({ passwordRequired: true, projectName: data.name })
+    }
+    const hashed = await hashPassword(providedPassword)
+    if (hashed !== data.review_password) {
+      return NextResponse.json({ passwordRequired: true, projectName: data.name, error: 'Incorrect password' })
+    }
   }
 
   // If client, verify they have access
@@ -52,5 +74,7 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
     }
   }
 
-  return NextResponse.json(data)
+  // Strip review_password from response
+  const { review_password, ...safeData } = data
+  return NextResponse.json(safeData)
 }

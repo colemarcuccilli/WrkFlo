@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { sendCommentNotification } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
@@ -32,5 +33,49 @@ export async function POST(req: NextRequest) {
     })
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Send email notification to creator when a client comments
+  if (body.author_role === 'client' && body.file_id) {
+    try {
+      // Look up file → project → creator
+      const { data: file } = await supabase
+        .from('files')
+        .select('name, project_id')
+        .eq('id', body.file_id)
+        .single()
+
+      if (file?.project_id) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('name, creator_id')
+          .eq('id', file.project_id)
+          .single()
+
+        if (project?.creator_id) {
+          const { data: creator } = await supabase
+            .from('users')
+            .select('email')
+            .eq('id', project.creator_id)
+            .single()
+
+          if (creator?.email) {
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://wrkflo.us')
+
+            sendCommentNotification({
+              to: creator.email,
+              clientName: body.author_name || 'A client',
+              commentText: body.content || '',
+              fileName: file.name,
+              projectName: project.name,
+              projectUrl: `${baseUrl}/project/${file.project_id}`,
+            }).catch(err => console.error('Comment email failed:', err))
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error preparing comment notification:', err)
+    }
+  }
+
   return NextResponse.json(data, { status: 201 })
 }

@@ -247,9 +247,69 @@ ALTER TABLE public.user_cloud_tokens ENABLE ROW LEVEL SECURITY;
 -- FROM public.user_drive_tokens
 -- ON CONFLICT (user_id, provider) DO NOTHING;
 
+-- ── Review Password Protection ─────────────────────────────────────────
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS review_password text;
+
 -- ── Comment Replies ─────────────────────────────────────────────────────
 -- Add parent_id for threaded replies
 ALTER TABLE public.comments
   ADD COLUMN IF NOT EXISTS parent_id uuid REFERENCES public.comments(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
+
+-- ── BUG-017: Add missing description and due_date columns ─────────────────
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS description text,
+  ADD COLUMN IF NOT EXISTS due_date date;
+
+-- ── BUG-018: Add creator_name denormalized column ─────────────────────────
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS creator_name text;
+
+-- ── Bug Reports (Beta Testing) ──────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.bug_reports (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category text NOT NULL,
+  description text NOT NULL,
+  url text,
+  browser_info text,
+  viewport text,
+  user_email text,
+  user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  metadata jsonb DEFAULT '{}',
+  status text DEFAULT 'new',
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.bug_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can insert bug_reports"
+  ON public.bug_reports FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Only admins can read bug_reports"
+  ON public.bug_reports FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE INDEX IF NOT EXISTS idx_bug_reports_status ON public.bug_reports(status);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON public.bug_reports(created_at DESC);
+
+-- ── Beta Invites ────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.beta_invites (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  invited_by uuid REFERENCES public.users(id),
+  status text DEFAULT 'pending',
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.beta_invites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin read beta_invites" ON public.beta_invites
+  FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert beta_invites" ON public.beta_invites
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Admin update beta_invites" ON public.beta_invites
+  FOR UPDATE USING (auth.role() = 'authenticated');
+
+CREATE INDEX IF NOT EXISTS idx_beta_invites_email ON public.beta_invites(email);
