@@ -197,7 +197,7 @@ export default function AdminPage() {
 
   const loadOverview = useCallback(async () => {
     setTabLoading(true)
-    try { setOverview(await fj('/api/admin/overview')) } catch { setOverview({}) }
+    try { setOverview(await fj('/api/admin/stats')) } catch { setOverview({}) }
     setTabLoading(false)
   }, [fj])
 
@@ -333,7 +333,7 @@ export default function AdminPage() {
     checkConn('Google Drive', '/api/google-drive/status')
     checkConn('Dropbox', '/api/dropbox/status')
     checkConn('OneDrive', '/api/onedrive/status')
-    checkConn('Supabase', '/api/admin/overview')
+    checkConn('Supabase', '/api/admin/stats')
     checkConn('Resend', '/api/admin/test-email')
   }
 
@@ -802,7 +802,7 @@ export default function AdminPage() {
       { name: 'Google Drive', url: '/api/google-drive/status' },
       { name: 'Dropbox', url: '/api/dropbox/status' },
       { name: 'OneDrive', url: '/api/onedrive/status' },
-      { name: 'Supabase', url: '/api/admin/overview' },
+      { name: 'Supabase', url: '/api/admin/stats' },
       { name: 'Resend', url: '/api/admin/test-email' },
     ]
     const si = (s?: string) => {
