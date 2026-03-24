@@ -40,6 +40,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Track status change activity server-side
+  Promise.resolve(createServiceClient().from('activity_log').insert({
+    user_id: null,
+    action: body.status === 'approved' ? 'file_approved' : 'changes_requested',
+    category: 'status',
+    resource_type: 'file',
+    resource_id: params.id,
+  })).catch(() => {})
+
   // Send email notifications for approval / changes-requested
   if ((status === 'approved' || status === 'changes-requested') && currentFile?.project_id) {
     try {

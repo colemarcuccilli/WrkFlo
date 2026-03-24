@@ -34,6 +34,18 @@ export async function POST(req: NextRequest) {
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Track comment activity server-side
+  // Track activity (fire and forget)
+  Promise.resolve(createServiceClient().from('activity_log').insert({
+    user_id: body.author_id || null,
+    user_email: body.author_name || null,
+    action: 'comment_added',
+    category: 'comment',
+    resource_type: 'file',
+    resource_id: body.file_id,
+    metadata: { role: body.author_role },
+  })).catch(() => {})
+
   // Send email notification to creator when a client comments
   if (body.author_role === 'client' && body.file_id) {
     try {

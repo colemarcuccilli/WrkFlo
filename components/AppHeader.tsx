@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import GlobalSearch from '@/components/GlobalSearch';
-import { isAdmin } from '@/lib/admin';
 
 const CYAN = '#15f3ec';
 const MINT = '#16ffc0';
@@ -65,18 +64,6 @@ export default function AppHeader() {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {isAdmin(user?.email) && (
-            <Link href="/admin" style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8,
-              background: 'rgba(21,243,236,0.06)', border: '1px solid rgba(21,243,236,0.15)',
-              color: CYAN, fontSize: 12, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              Admin
-            </Link>
-          )}
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
             style={{

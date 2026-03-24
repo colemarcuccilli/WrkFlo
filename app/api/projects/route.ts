@@ -91,6 +91,17 @@ export async function POST(req: NextRequest) {
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Track activity server-side
+  // Track activity (fire and forget)
+  Promise.resolve(createServiceClient().from('activity_log').insert({
+    user_id: user.id,
+    user_email: user.email,
+    action: 'project_created',
+    category: 'project',
+    resource_type: 'project',
+    resource_id: data.id,
+  })).catch(() => {})
+
   // Auto-assign client access if a client_id was provided (same as ShareModal logic)
   if (body.client_id && data?.id) {
     const { data: clientRecord } = await supabase

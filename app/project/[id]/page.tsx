@@ -16,6 +16,8 @@ import FeedbackSummarizer from '@/components/FeedbackSummarizer';
 import RealtimeComments from '@/components/RealtimeComments';
 import RealtimeFiles from '@/components/RealtimeFiles';
 import OnboardingTooltips from '@/components/OnboardingTooltips';
+import { track } from '@/lib/track';
+import { triggerMilestone } from '@/components/FeedbackPrompt';
 
 const CYAN = '#15f3ec';
 const BLUE = '#5bc7f9';
@@ -103,6 +105,7 @@ export default function ProjectPage() {
   }, [projectId, selectedFileId]);
 
   useEffect(() => {
+    track.projectViewed(projectId, user?.id);
     fetchProject();
   }, [projectId]);
 

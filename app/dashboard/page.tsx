@@ -6,6 +6,7 @@ import ActivityFeed from '@/components/ActivityFeed';
 import { useAuth } from '@/components/AuthProvider';
 import AppHeader from '@/components/AppHeader';
 import OnboardingTooltips from '@/components/OnboardingTooltips';
+import { track } from '@/lib/track';
 
 function normalizeProject(p: any) {
   // BUG-018: Resolve creator name from joined user data or denormalized field
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?';
 
   useEffect(() => {
+    track.pageViewed('/dashboard', user?.id);
     fetch('/api/projects')
       .then((r) => r.json())
       .then((data) => {

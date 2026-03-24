@@ -12,6 +12,7 @@ import CompletionCelebration from '@/components/CompletionCelebration';
 import MobileCommentSheet from '@/components/MobileCommentSheet';
 import RealtimeComments from '@/components/RealtimeComments';
 import RealtimeFiles from '@/components/RealtimeFiles';
+import { track } from '@/lib/track';
 
 const CYAN = '#15f3ec';
 const BLUE = '#5bc7f9';
@@ -112,6 +113,7 @@ export default function ReviewPage() {
           setPasswordRequired(false);
           const normalized = normalizeProject(data);
           setProject(normalized);
+          track.reviewPageViewed(data.id, token);
           if (!selectedFileId) {
             setSelectedFileId(normalized.files?.[0]?.id || null);
           }

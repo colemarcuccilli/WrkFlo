@@ -313,3 +313,50 @@ CREATE POLICY "Admin update beta_invites" ON public.beta_invites
   FOR UPDATE USING (auth.role() = 'authenticated');
 
 CREATE INDEX IF NOT EXISTS idx_beta_invites_email ON public.beta_invites(email);
+
+-- ── Activity Tracking (Beta Analytics) ──────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.activity_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  user_email text,
+  action text NOT NULL,
+  category text NOT NULL DEFAULT 'general',
+  resource_type text,
+  resource_id text,
+  metadata jsonb DEFAULT '{}',
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role can manage activity_log"
+  ON public.activity_log FOR ALL USING (true) WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_user ON public.activity_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_log_action ON public.activity_log(action);
+CREATE INDEX IF NOT EXISTS idx_activity_log_category ON public.activity_log(category);
+CREATE INDEX IF NOT EXISTS idx_activity_log_created ON public.activity_log(created_at DESC);
+
+-- ── Feedback Responses (Beta Milestone Prompts) ─────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.feedback_responses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  user_email text,
+  prompt_type text NOT NULL,
+  rating integer,
+  feedback text,
+  metadata jsonb DEFAULT '{}',
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.feedback_responses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert feedback"
+  ON public.feedback_responses FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can read feedback"
+  ON public.feedback_responses FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE INDEX IF NOT EXISTS idx_feedback_user ON public.feedback_responses(user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_type ON public.feedback_responses(prompt_type);
