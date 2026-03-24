@@ -16,8 +16,16 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Verify this email was actually invited
-  const { data: invite } = await supabase
+  // Check if this is a beta invite (from admin panel)
+  const { data: betaInvite } = await supabase
+    .from('beta_invites')
+    .select('id')
+    .eq('email', email)
+    .limit(1)
+    .single()
+
+  // Check if this is a client invite (from a creator)
+  const { data: clientInvite } = await supabase
     .from('creator_clients')
     .select('id')
     .eq('client_email', email)
@@ -25,7 +33,10 @@ export async function POST(req: NextRequest) {
     .limit(1)
     .single()
 
-  if (!invite) {
+  const isBetaInvite = !!betaInvite
+  const isClientInvite = !!clientInvite
+
+  if (!isBetaInvite && !isClientInvite) {
     return NextResponse.json({ error: 'No invitation found for this email. Ask the creator to invite you first.' }, { status: 403 })
   }
 
@@ -40,12 +51,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'This email belongs to a creator account. Please sign in instead.' }, { status: 409 })
   }
 
+  // Beta invites get creator role, client invites get client role
+  const assignedRole = isBetaInvite ? 'creator' : 'client'
+
   // Create user via admin API — auto-confirmed, no email needed
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: name || email.split('@')[0], role: 'client' },
+    user_metadata: { full_name: name || email.split('@')[0], role: assignedRole },
   })
 
   if (authError) {
@@ -61,18 +75,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }
 
-  // Set role to client in users table
+  // Set role in users table
   await supabase
     .from('users')
-    .update({ role: 'client', name: name || email.split('@')[0] })
+    .update({ role: assignedRole, name: name || email.split('@')[0] })
     .eq('id', userId)
 
-  // Activate all pending invites for this email
-  await supabase
-    .from('creator_clients')
-    .update({ client_id: userId, status: 'active' })
-    .eq('client_email', email)
-    .eq('status', 'pending')
+  // Mark beta invite as accepted
+  if (isBetaInvite) {
+    await supabase
+      .from('beta_invites')
+      .update({ status: 'accepted', used: true, used_by: email, used_at: new Date().toISOString() })
+      .eq('email', email)
+  }
+
+  // Activate all pending client invites for this email
+  if (isClientInvite) {
+    await supabase
+      .from('creator_clients')
+      .update({ client_id: userId, status: 'active' })
+      .eq('client_email', email)
+      .eq('status', 'pending')
+  }
 
   return NextResponse.json({ ok: true, userId })
 }
