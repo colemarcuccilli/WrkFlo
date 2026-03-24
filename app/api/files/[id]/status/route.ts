@@ -21,6 +21,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .eq('id', params.id)
     .single()
 
+  if (!currentFile) {
+    return NextResponse.json({ error: 'File not found' }, { status: 404 })
+  }
+
   // Auth check: require either session or valid review token
   const supabaseAuth = await createClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
