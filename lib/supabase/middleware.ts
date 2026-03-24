@@ -53,11 +53,16 @@ export async function updateSession(request: NextRequest) {
 
     const role = profile?.role || 'creator'
 
-    // Client accessing creator-only pages -> redirect to client dashboard
+    // Admin accounts can access everything — no redirects
+    const ADMIN_EMAILS = ['cole@sweetdreams.us', 'bordeauxcreates@gmail.com']
+    const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
+    if (isAdmin) return supabaseResponse
+
+    // Creator-only pages (clients and viewers get redirected)
     const creatorOnlyPaths = ['/dashboard', '/project/', '/projects/', '/clients', '/team', '/settings']
     const isCreatorPage = creatorOnlyPaths.some((path) => pathname.startsWith(path))
 
-    if (role === 'client' && isCreatorPage) {
+    if ((role === 'client' || role === 'viewer') && isCreatorPage) {
       const url = request.nextUrl.clone()
       url.pathname = '/client-dashboard'
       return NextResponse.redirect(url)

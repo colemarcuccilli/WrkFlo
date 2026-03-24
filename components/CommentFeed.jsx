@@ -45,8 +45,16 @@ function InlineReplyInput({ onSubmit, onCancel }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Write a reply..."
-        className="flex-1 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
+        className="flex-1 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none transition-shadow duration-200"
         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.9)' }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(21,243,236,0.3)';
+          e.currentTarget.style.boxShadow = '0 0 15px rgba(21,243,236,0.1), 0 0 30px rgba(21,243,236,0.05)';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') onCancel();
         }}
@@ -75,7 +83,9 @@ function ReplyCard({ comment }) {
   return (
     <div className="flex gap-2 mt-2 pl-3" style={{ borderLeft: '2px solid rgba(21,243,236,0.1)' }}>
       <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={
-        comment.authorRole === 'client'
+        comment.authorRole === 'viewer'
+          ? { background: 'rgba(168,85,247,0.15)', color: '#a855f7' }
+          : comment.authorRole === 'client'
           ? { background: 'rgba(21,243,236,0.12)', color: CYAN }
           : { background: CYAN, color: '#0a0a0f' }
       }>
@@ -85,7 +95,9 @@ function ReplyCard({ comment }) {
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>{comment.author}</span>
           <span className="text-[10px] px-1 py-0.5 rounded" style={
-            comment.authorRole === 'client'
+            comment.authorRole === 'viewer'
+              ? { background: 'rgba(168,85,247,0.08)', color: '#a855f7' }
+              : comment.authorRole === 'client'
               ? { background: 'rgba(21,243,236,0.08)', color: CYAN }
               : { background: 'rgba(21,243,236,0.12)', color: CYAN }
           }>
@@ -117,7 +129,9 @@ function CommentCard({ comment, comments, fileType, onSeekToTimestamp, onReply }
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={
-            comment.authorRole === 'client'
+            comment.authorRole === 'viewer'
+              ? { background: 'rgba(168,85,247,0.15)', color: '#a855f7' }
+              : comment.authorRole === 'client'
               ? { background: 'rgba(21,243,236,0.12)', color: CYAN }
               : { background: CYAN, color: '#0a0a0f' }
           }>
@@ -125,7 +139,9 @@ function CommentCard({ comment, comments, fileType, onSeekToTimestamp, onReply }
           </div>
           <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{comment.author}</span>
           <span className="text-xs px-1.5 py-0.5 rounded" style={
-            comment.authorRole === 'client'
+            comment.authorRole === 'viewer'
+              ? { background: 'rgba(168,85,247,0.08)', color: '#a855f7' }
+              : comment.authorRole === 'client'
               ? { background: 'rgba(21,243,236,0.08)', color: CYAN }
               : { background: 'rgba(21,243,236,0.12)', color: CYAN }
           }>

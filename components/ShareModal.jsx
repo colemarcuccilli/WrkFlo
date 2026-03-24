@@ -196,7 +196,7 @@ export default function ShareModal({ project, onClose, onSetPassword = null }) {
               )}
             </button>
           </div>
-          <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Clients must be signed in to access the review</p>
+          <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Anyone with this link can view. Only assigned clients can approve.</p>
           </>
           )}
         </div>

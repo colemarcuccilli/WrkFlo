@@ -70,8 +70,8 @@ export async function POST(request: Request) {
     if (error) throw error
 
     // Send branded invite email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wrkflo.us'
-    const joinUrl = `${appUrl}/join?email=${encodeURIComponent(email)}&role=${role || 'creator'}`
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://wrkflo.us'
+    const joinUrl = `${appUrl}/join?email=${encodeURIComponent(email)}&role=creator&beta=true`
 
     if (process.env.RESEND_KEY) {
       await resend.emails.send({
@@ -101,11 +101,11 @@ export async function POST(request: Request) {
         <table style="width:100%;border-collapse:collapse">
           <tr>
             <td style="padding:6px 12px 6px 0;font-size:13px;color:rgba(255,255,255,0.4);white-space:nowrap">Role</td>
-            <td style="padding:6px 0;font-size:13px;color:rgba(255,255,255,0.8)">${role === 'client' ? 'Client Reviewer' : 'Creator'}</td>
+            <td style="padding:6px 0;font-size:13px;color:rgba(255,255,255,0.8)">Creator (Full Access)</td>
           </tr>
           <tr>
             <td style="padding:6px 12px 6px 0;font-size:13px;color:rgba(255,255,255,0.4);white-space:nowrap">Access</td>
-            <td style="padding:6px 0;font-size:13px;color:rgba(255,255,255,0.8)">Full Beta Access</td>
+            <td style="padding:6px 0;font-size:13px;color:rgba(255,255,255,0.8)">Enterprise — Free Forever (Beta)</td>
           </tr>
         </table>
       </div>

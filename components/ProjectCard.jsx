@@ -44,7 +44,7 @@ export default function ProjectCard({ project }) {
         style={{
           background: CARD_BG,
           border: `1px solid ${hovered ? 'rgba(21,243,236,0.25)' : CARD_BORDER}`,
-          boxShadow: hovered ? '0 4px 24px rgba(21,243,236,0.12)' : 'none',
+          boxShadow: hovered ? '0 0 30px rgba(21,243,236,0.12), 0 4px 24px rgba(21,243,236,0.12)' : '0 0 20px rgba(21,243,236,0.05)',
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}

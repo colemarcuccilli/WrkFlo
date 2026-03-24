@@ -215,6 +215,52 @@ export default function ApprovalBar({ file, onStatusChange, viewerRole = 'client
             </div>
           )}
         </div>
+      ) : viewerRole === 'viewer' ? (
+        /* ── Viewer Status (view-only, no approval) ── */
+        <div>
+          {status === 'in-review' && (
+            <div
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium"
+              style={{ background: 'rgba(168,85,247,0.08)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.2)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              Viewing Only — Approval by Client
+            </div>
+          )}
+          {status === 'draft' && (
+            <div
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium"
+              style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className="w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.3)' }} />
+              Draft — Awaiting Upload
+            </div>
+          )}
+          {status === 'changes-requested' && (
+            <div
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium"
+              style={{ background: 'rgba(255,80,80,0.08)', color: '#ff5050', border: '1px solid rgba(255,80,80,0.2)' }}
+            >
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#ff5050' }} />
+              Changes Requested
+            </div>
+          )}
+          {status === 'approved' && (
+            <div
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold"
+              style={{ background: 'rgba(22,255,192,0.1)', color: '#16ffc0', border: '1px solid rgba(22,255,192,0.2)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              Approved
+            </div>
+          )}
+        </div>
       ) : (
         /* ── Client Buttons ── */
         <div>
@@ -291,22 +337,6 @@ export default function ApprovalBar({ file, onStatusChange, viewerRole = 'client
         </div>
       )}
 
-      {/* Approval badge download (for approved files) */}
-      {(status === 'approved' || status === 'locked') && (
-        <a
-          href={`/api/badge?fileName=${encodeURIComponent(file?.name || 'File')}&date=${encodeURIComponent(new Date().toLocaleDateString())}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-          style={{ color: MINT, background: 'rgba(22,255,192,0.06)', border: '1px solid rgba(22,255,192,0.15)' }}
-          title="Download approval badge"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Download Approval Badge
-        </a>
-      )}
     </div>
   );
 }

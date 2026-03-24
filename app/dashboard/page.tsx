@@ -87,10 +87,10 @@ export default function DashboardPage() {
 
   /* ── Stat colours per card ───────────────────────── */
   const stats = [
-    { label: 'Total Projects', value: loading ? '—' : totalProjects, valueColor: textHeading },
-    { label: 'In Review',      value: loading ? '—' : inReview,      valueColor: CYAN },
-    { label: 'Changes Requested', value: loading ? '—' : changesReq, valueColor: '#f87171' },
-    { label: 'Approved',       value: loading ? '—' : approved,      valueColor: MINT },
+    { label: 'Total Projects', value: loading ? '—' : totalProjects, valueColor: textHeading, glow: 'none' },
+    { label: 'In Review',      value: loading ? '—' : inReview,      valueColor: CYAN, glow: '0 0 20px rgba(21,243,236,0.08), 0 0 40px rgba(21,243,236,0.04)' },
+    { label: 'Changes Requested', value: loading ? '—' : changesReq, valueColor: '#f87171', glow: '0 0 20px rgba(248,113,113,0.08), 0 0 40px rgba(248,113,113,0.04)' },
+    { label: 'Approved',       value: loading ? '—' : approved,      valueColor: MINT, glow: '0 0 20px rgba(22,255,192,0.08), 0 0 40px rgba(22,255,192,0.04)' },
   ];
 
   return (
@@ -122,6 +122,7 @@ export default function DashboardPage() {
                 background: cardBg,
                 border: `1px solid ${cardBorder}`,
                 backdropFilter: 'blur(12px)',
+                boxShadow: stat.glow,
               }}
             >
               <p className="text-xs mb-1" style={{ color: textLabel }}>{stat.label}</p>

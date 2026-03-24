@@ -43,6 +43,7 @@ export default function AppHeader() {
             fontWeight: 800, fontSize: 18, letterSpacing: '-0.02em',
             background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            filter: 'drop-shadow(0 0 8px rgba(21,243,236,0.4))',
           }}>WrkFlo</span>
         </Link>
 
