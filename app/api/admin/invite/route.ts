@@ -132,6 +132,16 @@ export async function POST(request: Request) {
     return NextResponse.json(invite)
   } catch (err: any) {
     console.error('Admin invite error:', err)
+    // Log error to activity_log so admins see it
+    try {
+      const service = createServiceClient()
+      await service.from('activity_log').insert({
+        user_email: 'system',
+        action: 'invite_error',
+        category: 'error',
+        metadata: { error: err.message || String(err) },
+      })
+    } catch {}
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 })
   }
 }
