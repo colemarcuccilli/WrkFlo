@@ -33,8 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json()
   const { password } = body
 
-  if (!password || typeof password !== 'string' || password.length < 1) {
-    return NextResponse.json({ error: 'Password is required' }, { status: 400 })
+  if (!password || typeof password !== 'string' || password.length < 4) {
+    return NextResponse.json({ error: 'Password must be at least 4 characters' }, { status: 400 })
   }
 
   const hashed = await hashPassword(password)

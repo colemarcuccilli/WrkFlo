@@ -15,10 +15,25 @@ export async function GET(request: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
+        // Ensure user profile exists (fallback if DB trigger failed)
+        const serviceClient = createServiceClient()
+        const { data: existingUserProfile } = await serviceClient
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+
+        if (!existingUserProfile) {
+          await serviceClient.from('users').insert({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0],
+            role: user.user_metadata?.role || 'creator',
+          })
+        }
+
         // If signing up as a client (from /join page), set role and activate invites
         if (role === 'client') {
-          const serviceClient = createServiceClient()
-
           // Check current role — NEVER downgrade a creator to client
           const { data: existingProfile } = await serviceClient
             .from('users')

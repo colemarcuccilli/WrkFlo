@@ -1,18 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 
+// Same hash function used in password route
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password + 'wrkflo-review-salt')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
   const supabase = createServiceClient()
 
-  // Look up project by review token
+  // Look up project by review token (include review_password for check)
   const { data: project, error } = await supabase
     .from('projects')
-    .select('id, name, client_name, creator_name, status, created_at, review_token')
+    .select('id, name, client_name, creator_name, status, created_at, review_token, review_password, updated_at')
     .eq('review_token', params.token)
     .single()
 
   if (error || !project) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  }
+
+  // Password protection check
+  if (project.review_password) {
+    const providedPassword = req.headers.get('X-Review-Password')
+    if (!providedPassword) {
+      return NextResponse.json({ passwordRequired: true, projectName: project.name })
+    }
+    const hashed = await hashPassword(providedPassword)
+    if (hashed !== project.review_password) {
+      return NextResponse.json({ passwordRequired: true, projectName: project.name, error: 'Incorrect password' })
+    }
   }
 
   // Get all files with their versions
@@ -42,8 +63,11 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
       : '',
   }))
 
+  // Strip review_password from response
+  const { review_password, ...safeProject } = project
+
   return NextResponse.json({
-    ...project,
+    ...safeProject,
     files: deliveryFiles,
     completedAt: deliveryFiles.every(f => f.status === 'approved' || f.status === 'locked')
       ? new Date().toISOString()

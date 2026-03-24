@@ -127,6 +127,25 @@ export default function ReviewPage() {
     fetchProject();
   }, [token]);
 
+  // Handle realtime new comments (memoized to prevent re-subscriptions)
+  const handleNewComment = useCallback((newComment: any) => {
+    setProject((prev: any) => {
+      if (!prev) return prev;
+      const alreadyExists = prev.files.some((f: any) =>
+        (f.comments || []).some((c: any) => c.id === newComment.id)
+      );
+      if (alreadyExists) return prev;
+      return {
+        ...prev,
+        files: prev.files.map((f: any) =>
+          f.id === selectedFileId
+            ? { ...f, comments: [...(f.comments || []), newComment] }
+            : f
+        ),
+      };
+    });
+  }, [selectedFileId]);
+
   // Handle realtime file changes (new versions, status updates)
   const handleFileChanged = useCallback(({ fileId, newData, eventType }: { fileId: string; newData: any; eventType: string }) => {
     if (eventType === 'INSERT') {
@@ -740,23 +759,7 @@ export default function ReviewPage() {
       {/* Realtime — listen for new comments from the creator side */}
       <RealtimeComments
         fileId={selectedFileId}
-        onNewComment={(newComment) => {
-          setProject((prev: any) => {
-            if (!prev) return prev;
-            const alreadyExists = prev.files.some((f: any) =>
-              (f.comments || []).some((c: any) => c.id === newComment.id)
-            );
-            if (alreadyExists) return prev;
-            return {
-              ...prev,
-              files: prev.files.map((f: any) =>
-                f.id === selectedFileId
-                  ? { ...f, comments: [...(f.comments || []), newComment] }
-                  : f
-              ),
-            };
-          });
-        }}
+        onNewComment={handleNewComment}
       />
     </div>
   );

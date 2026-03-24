@@ -87,7 +87,7 @@ export default function DeliveryPage() {
   const allApproved = project.files?.length > 0 && project.files.every((f: any) => f.status === 'approved' || f.status === 'locked');
   const approvedCount = project.files?.filter((f: any) => f.status === 'approved' || f.status === 'locked').length || 0;
   const totalFiles = project.files?.length || 0;
-  const completionDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const completionDate = (project.updated_at ? new Date(project.updated_at) : new Date()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   return (
     <div className="min-h-screen" style={{ background: BG }}>

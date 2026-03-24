@@ -58,7 +58,7 @@ export default function NewProjectPage() {
     } else {
       const client = clients.find((c: any) => c.id === clientId);
       if (client) {
-        setForm((p) => ({ ...p, client_id: clientId, client_name: client.client_email }));
+        setForm((p) => ({ ...p, client_id: clientId, client_name: client.client_name || client.client_email?.split('@')[0] || client.client_email }));
       }
     }
   };
