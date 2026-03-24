@@ -16,7 +16,9 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createServiceClient()
-  const pattern = `%${q}%`
+  // Escape PostgREST special chars
+  const safeQ = q.replace(/[%_\\(),]/g, '\\$&')
+  const pattern = `%${safeQ}%`
 
   // Get user's project IDs first (for scoping)
   const { data: profile } = await supabase

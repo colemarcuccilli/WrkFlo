@@ -11,6 +11,7 @@ export default function DropboxImporter({ projectId, onImportComplete }: Dropbox
   const [connected, setConnected] = useState<boolean | null>(null)
   const [showPicker, setShowPicker] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/dropbox/status')
@@ -22,6 +23,7 @@ export default function DropboxImporter({ projectId, onImportComplete }: Dropbox
   const handleFilesPicked = async (files: { id: string; name: string; mimeType: string }[]) => {
     setShowPicker(false)
     setImporting(true)
+    setError('')
 
     try {
       const res = await fetch('/api/dropbox/import', {
@@ -33,9 +35,12 @@ export default function DropboxImporter({ projectId, onImportComplete }: Dropbox
       if (res.ok) {
         const created = await res.json()
         onImportComplete(created)
+      } else {
+        setError('Failed to import file. Please reconnect Dropbox and try again.')
       }
     } catch (err) {
       console.error('Dropbox import failed:', err)
+      setError('Failed to import file. Please reconnect Dropbox and try again.')
     }
 
     setImporting(false)
@@ -75,6 +80,10 @@ export default function DropboxImporter({ projectId, onImportComplete }: Dropbox
           </svg>
           Import from Dropbox
         </button>
+      )}
+
+      {error && (
+        <p className="text-xs mt-2 px-1" style={{ color: '#ff5050' }}>{error}</p>
       )}
 
       {showPicker && (

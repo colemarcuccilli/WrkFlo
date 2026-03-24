@@ -11,6 +11,7 @@ export default function GoogleDriveImporter({ projectId, onImportComplete }: Goo
   const [driveConnected, setDriveConnected] = useState<boolean | null>(null)
   const [showPicker, setShowPicker] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/google-drive/status')
@@ -22,6 +23,7 @@ export default function GoogleDriveImporter({ projectId, onImportComplete }: Goo
   const handleFilesPicked = async (files: { id: string; name: string; mimeType: string }[]) => {
     setShowPicker(false)
     setImporting(true)
+    setError('')
 
     try {
       const res = await fetch('/api/google-drive/import', {
@@ -33,9 +35,12 @@ export default function GoogleDriveImporter({ projectId, onImportComplete }: Goo
       if (res.ok) {
         const created = await res.json()
         onImportComplete(created)
+      } else {
+        setError('Failed to import file. Please reconnect Google Drive and try again.')
       }
     } catch (err) {
       console.error('Drive import failed:', err)
+      setError('Failed to import file. Please reconnect Google Drive and try again.')
     }
 
     setImporting(false)
@@ -86,6 +91,10 @@ export default function GoogleDriveImporter({ projectId, onImportComplete }: Goo
           </svg>
           Import from Google Drive
         </button>
+      )}
+
+      {error && (
+        <p className="text-xs mt-2 px-1" style={{ color: '#ff5050' }}>{error}</p>
       )}
 
       {showPicker && (

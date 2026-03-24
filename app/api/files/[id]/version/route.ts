@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+
+export const dynamic = "force-dynamic"
 
 // POST /api/files/[id]/version — create a new version from cloud storage
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const supabaseAuth = await createClient()
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     const supabase = createServiceClient()
     const body = await req.json()
 

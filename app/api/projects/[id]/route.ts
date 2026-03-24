@@ -2,8 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const supabaseAuth = await createClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
   const supabase = createServiceClient()
+
+  // Verify user has access: either owns the project or has client_project_access
+  const { data: project } = await supabase
+    .from('projects')
+    .select('creator_id')
+    .eq('id', params.id)
+    .single()
+
+  if (!project) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  }
+
+  if (project.creator_id !== user.id) {
+    const { data: access } = await supabase
+      .from('client_project_access')
+      .select('id')
+      .eq('project_id', params.id)
+      .eq('client_id', user.id)
+      .single()
+
+    if (!access) {
+      return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 })
+    }
+  }
+
   const { data, error } = await supabase
     .from('projects')
     .select(`*, files (id, name, type, version, status, current_round, url, storage_type, external_id, mime_type, duration, upload_date, file_versions (id, version_label, notes, created_at), comments (id, author_name, author_role, content, timestamp_data, revision_round, created_at))`)
@@ -14,11 +47,25 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const supabaseAuth = await createClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
   const supabase = createServiceClient()
   const body = await req.json()
+
+  // Whitelist allowed fields
+  const allowedFields = ['name', 'status', 'client_name', 'description', 'due_date']
+  const safeBody: Record<string, any> = {}
+  for (const key of allowedFields) {
+    if (body[key] !== undefined) safeBody[key] = body[key]
+  }
+
   const { data, error } = await supabase
     .from('projects')
-    .update(body)
+    .update(safeBody)
     .eq('id', params.id)
     .select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

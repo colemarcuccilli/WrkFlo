@@ -513,6 +513,20 @@ export default function ReviewPage() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 68px)' }}>
+        {project.files.length === 0 ? (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '60px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', width: '100%',
+          }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 16, opacity: 0.3 }}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <p style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 8px' }}>No files yet</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>The creator hasn&apos;t uploaded any files to this project yet.</p>
+          </div>
+        ) : (
+        <>
         {/* File browser sidebar -- mobile fullscreen overlay, hidden on tablet, fixed on desktop */}
         <div
           className={`
@@ -632,6 +646,8 @@ export default function ReviewPage() {
             />
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Mobile tab bar */}
