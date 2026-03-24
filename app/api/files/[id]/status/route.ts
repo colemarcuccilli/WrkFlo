@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import {
   sendApprovalNotification,
   sendChangesRequestedNotification,
   sendProjectCompleteNotification,
 } from '@/lib/email'
+
+export const dynamic = "force-dynamic"
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createServiceClient()
@@ -17,6 +20,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .select('status, current_round, name, project_id')
     .eq('id', params.id)
     .single()
+
+  // Auth check: require either session or valid review token
+  const supabaseAuth = await createClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
+
+  if (!user) {
+    const reviewToken = req.headers.get('x-review-token')
+    if (!reviewToken) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    const { data: project } = await supabase.from('projects').select('review_token').eq('id', currentFile.project_id).single()
+    if (!project || String(project.review_token) !== reviewToken) {
+      return NextResponse.json({ error: 'Invalid review token' }, { status: 403 })
+    }
+  }
 
   const currentRound = currentFile?.current_round || 1
   const wasChangesRequested = currentFile?.status === 'changes-requested'

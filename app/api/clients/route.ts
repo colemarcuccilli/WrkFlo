@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
 
   // Send invitation email
   const creatorName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'A creator'
-  const origin = req.headers.get('origin') || 'https://wrkflo-sweet-dreams-projects.vercel.app'
+  const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://wrkflo.us'
   const joinUrl = `${origin}/join?email=${encodeURIComponent(email)}&from=${encodeURIComponent(creatorName)}`
 
   try {

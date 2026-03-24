@@ -341,7 +341,7 @@ export default function ReviewPage() {
     try {
       await fetch('/api/comments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Review-Token': token },
         body: JSON.stringify({
           file_id: selectedFileId,
           author_name: displayName,
@@ -378,7 +378,7 @@ export default function ReviewPage() {
     try {
       await fetch('/api/comments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Review-Token': token },
         body: JSON.stringify({
           file_id: selectedFileId,
           author_name: displayName,
@@ -418,7 +418,7 @@ export default function ReviewPage() {
     try {
       await fetch(`/api/files/${selectedFileId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Review-Token': token },
         body: JSON.stringify({ status: newStatus }),
       });
     } catch (e) {

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+
 import { createClient } from '@/lib/supabase/client'
 
 const CYAN = '#15f3ec';
@@ -13,7 +14,6 @@ export default function LoginPage() {
   const redirect = searchParams.get('redirect') || '/dashboard'
   const authError = searchParams.get('error')
 
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -60,27 +60,12 @@ export default function LoginPage() {
     setError('')
     setMessage('')
 
-    if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`,
-        },
-      })
-      if (error) {
-        setError(error.message)
-      } else {
-        setMessage('Check your email for a confirmation link.')
-      }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError(error.message)
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-      } else {
-        await redirectByRole()
-        return
-      }
+      await redirectByRole()
+      return
     }
     setLoading(false)
   }
@@ -125,22 +110,11 @@ export default function LoginPage() {
           borderRadius: 20, padding: 32, backdropFilter: 'blur(20px)',
         }}>
           <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.02em', textAlign: 'center', marginBottom: 4 }}>
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+            Welcome back
           </h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 24 }}>
-            {mode === 'login' ? 'Sign in to manage your creative projects.' : 'Start managing your creative projects.'}
+            Sign in to manage your creative projects.
           </p>
-
-          {mode === 'signup' && (
-            <div style={{
-              marginBottom: 16, padding: 12, borderRadius: 12,
-              background: `rgba(21,243,236,0.06)`, border: `1px solid rgba(21,243,236,0.15)`,
-            }}>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-                Signing up creates a <strong style={{ color: CYAN }}>creator</strong> account. Clients are invited by their creators and don&apos;t need to sign up here.
-              </p>
-            </div>
-          )}
 
           {/* Google OAuth */}
           <button onClick={handleGoogleLogin} disabled={loading} style={{
@@ -186,7 +160,7 @@ export default function LoginPage() {
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'signup' ? 'Create a password (min 6 chars)' : 'Your password'}
+                placeholder="Your password"
                 required minLength={6} disabled={loading}
                 style={{
                   width: '100%', padding: '12px 16px', borderRadius: 10,
@@ -196,6 +170,12 @@ export default function LoginPage() {
                 onFocus={e => { e.currentTarget.style.borderColor = `rgba(21,243,236,0.5)`; e.currentTarget.style.boxShadow = `0 0 0 3px rgba(21,243,236,0.1)`; }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none'; }}
               />
+            </div>
+
+            <div style={{ textAlign: 'right', marginTop: -8 }}>
+              <Link href="/forgot-password" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none' }}>
+                Forgot password?
+              </Link>
             </div>
 
             {error && (
@@ -220,38 +200,15 @@ export default function LoginPage() {
               onMouseEnter={e => { if (!loading) { e.currentTarget.style.boxShadow = `0 0 36px rgba(21,243,236,0.55)`; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 20px rgba(21,243,236,0.3)`; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              {loading ? (
-                <>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</>
-              ) : mode === 'login' ? 'Sign In' : 'Create Account'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <p style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>
-            {mode === 'login' ? (
-              <>
-                Don&apos;t have an account?{' '}
-                <button onClick={() => { setMode('signup'); setError(''); setMessage(''); }}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14,
-                    color: CYAN, transition: 'opacity 0.2s', padding: 0,
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                >Sign up</button>
-              </>
-            ) : (
-              <>
-                Already have an account?{' '}
-                <button onClick={() => { setMode('login'); setError(''); setMessage(''); }}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14,
-                    color: CYAN, transition: 'opacity 0.2s', padding: 0,
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                >Sign in</button>
-              </>
-            )}
+            Need an account?{' '}
+            <Link href="/join" style={{ fontWeight: 600, fontSize: 14, color: CYAN, textDecoration: 'none' }}>
+              Join the beta
+            </Link>
           </p>
         </div>
 

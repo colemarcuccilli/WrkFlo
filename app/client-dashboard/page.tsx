@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
-import { UpgradePrompt } from '@/components/UpgradePrompt';
 
 /* ── Brand tokens (inline) ── */
 const CYAN = '#15f3ec';
@@ -20,8 +19,6 @@ export default function ClientDashboard() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-
   useEffect(() => {
     fetch('/api/projects')
       .then((r) => r.json())
@@ -89,26 +86,9 @@ export default function ClientDashboard() {
 
       <main className="max-w-5xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: TEXT_PRIMARY }}>Your Projects</h1>
-              <p className="mt-1" style={{ color: TEXT_SECONDARY }}>Projects shared with you for review.</p>
-            </div>
-            <button
-              onClick={() => setShowUpgrade(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={{
-                background: `linear-gradient(135deg, ${CYAN}, ${MINT})`,
-                color: '#0a0a0f',
-                boxShadow: '0 4px 20px rgba(21,243,236,0.2)',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Create Project
-            </button>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: TEXT_PRIMARY }}>Your Projects</h1>
+            <p className="mt-1" style={{ color: TEXT_SECONDARY }}>Projects shared with you for review.</p>
           </div>
         </div>
 
@@ -174,7 +154,6 @@ export default function ClientDashboard() {
         )}
       </main>
 
-      <UpgradePrompt isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </div>
   );
 }

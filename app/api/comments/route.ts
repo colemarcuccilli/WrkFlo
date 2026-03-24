@@ -1,10 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { sendCommentNotification } from '@/lib/email'
+
+export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
   const body = await req.json()
+
+  // Auth check: require either a valid session or a valid review token
+  const supabaseAuth = await createClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
+
+  if (!user) {
+    // Check for review token (guest reviewers)
+    const reviewToken = req.headers.get('x-review-token')
+    if (!reviewToken) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    // Verify the token matches the file's project
+    const { data: file } = await supabase.from('files').select('project_id').eq('id', body.file_id).single()
+    if (!file) {
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    }
+    const { data: project } = await supabase.from('projects').select('review_token').eq('id', file.project_id).single()
+    if (!project || String(project.review_token) !== reviewToken) {
+      return NextResponse.json({ error: 'Invalid review token' }, { status: 403 })
+    }
+  }
 
   // Get the file's current revision round
   let revisionRound = body.revision_round || 1

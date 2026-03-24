@@ -12,6 +12,9 @@ export default function JoinPage() {
   const searchParams = useSearchParams()
   const inviteEmail = searchParams.get('email') || ''
   const from = searchParams.get('from') || ''
+  const isBeta = searchParams.get('beta') === 'true'
+  const role = searchParams.get('role') || 'client'
+  const isCreator = isBeta || role === 'creator'
 
   const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [email, setEmail] = useState(inviteEmail)
@@ -27,13 +30,13 @@ export default function JoinPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        // Already logged in — link them as client and redirect
+        // Already logged in — link them and redirect
         fetch('/api/join', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: user.email }),
         }).then(() => {
-          window.location.href = '/client-dashboard'
+          window.location.href = isCreator ? '/dashboard' : '/client-dashboard'
         })
       }
     })
@@ -45,7 +48,7 @@ export default function JoinPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/client-dashboard&role=client`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${isCreator ? '/dashboard' : '/client-dashboard'}&role=${isCreator ? 'creator' : 'client'}`,
       },
     })
     if (error) {
@@ -78,7 +81,7 @@ export default function JoinPage() {
           setError('Account created! Please sign in.')
           setMode('login')
         } else {
-          window.location.href = '/client-dashboard'
+          window.location.href = isCreator ? '/dashboard' : '/client-dashboard'
           return
         }
       }
@@ -93,7 +96,7 @@ export default function JoinPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
         })
-        window.location.href = '/client-dashboard'
+        window.location.href = isCreator ? '/dashboard' : '/client-dashboard'
         return
       }
     }
@@ -148,15 +151,15 @@ export default function JoinPage() {
             <svg style={{ width: 14, height: 14, color: CYAN }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span style={{ fontSize: 12, fontWeight: 600, color: CYAN }}>You&apos;ve been invited to review</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: CYAN }}>{isCreator ? 'You&apos;ve been invited to the beta' : 'You&apos;ve been invited to review'}</span>
           </div>
 
           <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.02em', textAlign: 'center', marginBottom: 4, color: 'rgba(255,255,255,0.95)' }}>
-            {mode === 'signup' ? 'Create your client account' : 'Sign in to review'}
+            {mode === 'signup' ? (isCreator ? 'Create your Creator account' : 'Create your Client account') : 'Sign in to review'}
           </h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 24 }}>
             {mode === 'signup'
-              ? 'Set up your account to review and approve creative work.'
+              ? (isCreator ? 'Set up your account to start managing creative projects.' : 'Set up your account to review and approve creative work.')
               : 'Sign in with your existing account to continue.'}
           </p>
           {from && (
@@ -257,7 +260,7 @@ export default function JoinPage() {
               onMouseEnter={e => { if (!loading) { e.currentTarget.style.boxShadow = `0 0 36px rgba(21,243,236,0.55)`; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 20px rgba(21,243,236,0.3)`; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              {loading ? 'Please wait...' : mode === 'signup' ? 'Create Client Account' : 'Sign In'}
+              {loading ? 'Please wait...' : mode === 'signup' ? (isCreator ? 'Create Creator Account' : 'Create Client Account') : 'Sign In'}
             </button>
           </form>
 
@@ -281,9 +284,13 @@ export default function JoinPage() {
         </div>
 
         <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>
-          This is a <strong style={{ color: 'rgba(255,255,255,0.35)' }}>client</strong> account — for reviewing creative work shared with you.
+          {isCreator ? (
+            <>This is a <strong style={{ color: 'rgba(255,255,255,0.35)' }}>creator</strong> account — for managing your creative projects.</>
+          ) : (
+            <>This is a <strong style={{ color: 'rgba(255,255,255,0.35)' }}>client</strong> account — for reviewing creative work shared with you.</>
+          )}
           <br />
-          Are you a creator? <Link href="/login" style={{ color: CYAN, textDecoration: 'none' }}>Sign in here instead</Link>.
+          Already have an account? <Link href="/login" style={{ color: CYAN, textDecoration: 'none' }}>Sign in here instead</Link>.
         </p>
       </div>
     </div>
