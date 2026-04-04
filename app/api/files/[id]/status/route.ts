@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!reviewToken) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
-    const { data: project } = await supabase.from('projects').select('review_token').eq('id', currentFile.project_id).single()
+    const { data: project } = await supabase.from('projects').select('review_token').eq('id', currentFile.project_id).maybeSingle()
     if (!project || String(project.review_token) !== reviewToken) {
       return NextResponse.json({ error: 'Invalid review token' }, { status: 403 })
     }

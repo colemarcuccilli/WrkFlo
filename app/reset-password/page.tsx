@@ -37,7 +37,14 @@ export default function ResetPasswordPage() {
       setError(updateError.message)
     } else {
       setSuccess(true)
-      setTimeout(() => router.push('/dashboard'), 2000)
+      // Redirect based on role
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle()
+        setTimeout(() => router.push(profile?.role === 'client' ? '/client-dashboard' : '/dashboard'), 2000)
+      } else {
+        setTimeout(() => router.push('/login'), 2000)
+      }
     }
     setLoading(false)
   }

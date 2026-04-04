@@ -51,7 +51,7 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    const role = profile?.role || 'creator'
+    const role = profile?.role || 'client'
 
     // Admin accounts can access everything — no redirects
     const ADMIN_EMAILS = ['cole@sweetdreams.us', 'bordeauxcreates@gmail.com']

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
   const userId = req.nextUrl.searchParams.get('state')

@@ -20,11 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
     // Verify the token matches the file's project
-    const { data: file } = await supabase.from('files').select('project_id').eq('id', body.file_id).single()
+    const { data: file } = await supabase.from('files').select('project_id').eq('id', body.file_id).maybeSingle()
     if (!file) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
-    const { data: project } = await supabase.from('projects').select('review_token').eq('id', file.project_id).single()
+    const { data: project } = await supabase.from('projects').select('review_token').eq('id', file.project_id).maybeSingle()
     if (!project || String(project.review_token) !== reviewToken) {
       return NextResponse.json({ error: 'Invalid review token' }, { status: 403 })
     }

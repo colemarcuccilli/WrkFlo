@@ -115,7 +115,7 @@ export default function ClientDashboard() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project: any) => (
-              <Link key={project.id} href={`/review/${project.review_token}`} className="block group">
+              <Link key={project.id} href={project.review_token ? `/review/${project.review_token}` : '#'} className="block group">
                 <div
                   className="rounded-2xl p-5 transition-all"
                   style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}

@@ -38,7 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
     .from('users')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   const role = profile?.role || 'creator'
 
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
       .select('id')
       .eq('client_id', user.id)
       .eq('project_id', data.id)
-      .single()
+      .maybeSingle()
 
     if (!access) {
       return NextResponse.json({ error: 'You do not have access to this project' }, { status: 403 })

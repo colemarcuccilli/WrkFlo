@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 
+export const dynamic = "force-dynamic"
+
 // Detect file type from MIME type
 function detectType(mimeType: string): string {
   if (mimeType.startsWith('video/')) return 'video'

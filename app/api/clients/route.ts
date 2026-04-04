@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase'
 import { createClient } from '@/lib/supabase/server'
 import { sendClientInviteEmail } from '@/lib/email'
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   const supabaseAuth = await createClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()

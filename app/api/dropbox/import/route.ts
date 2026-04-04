@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase'
 import { detectFileType } from '@/lib/cloud-storage'
 
+export const dynamic = "force-dynamic"
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

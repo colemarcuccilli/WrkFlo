@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.trim()
   if (!q) {
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
     .from('users')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   const role = profile?.role || 'creator'
 
