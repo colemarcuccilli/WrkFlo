@@ -15,23 +15,22 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createServiceClient()
+  const normalizedEmail = email.toLowerCase().trim()
 
   // Check if this is a beta invite (from admin panel)
   const { data: betaInvite } = await supabase
     .from('beta_invites')
     .select('id')
-    .eq('email', email)
-    .limit(1)
-    .single()
+    .ilike('email', normalizedEmail)
+    .maybeSingle()
 
   // Check if this is a client invite (from a creator)
   const { data: clientInvite } = await supabase
     .from('creator_clients')
     .select('id')
-    .eq('client_email', email)
+    .ilike('client_email', normalizedEmail)
     .in('status', ['pending', 'active'])
-    .limit(1)
-    .single()
+    .maybeSingle()
 
   const isBetaInvite = !!betaInvite
   const isClientInvite = !!clientInvite
@@ -44,8 +43,8 @@ export async function POST(req: NextRequest) {
   const { data: existingUser } = await supabase
     .from('users')
     .select('id, role')
-    .eq('email', email)
-    .single()
+    .ilike('email', normalizedEmail)
+    .maybeSingle()
 
   if (existingUser?.role === 'creator') {
     return NextResponse.json({ error: 'This email belongs to a creator account. Please sign in instead.' }, { status: 409 })
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   // Create user via admin API — auto-confirmed, no email needed
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
+    email: normalizedEmail,
     password,
     email_confirm: true,
     user_metadata: { full_name: name || email.split('@')[0], role: assignedRole },
@@ -85,8 +84,8 @@ export async function POST(req: NextRequest) {
   if (isBetaInvite) {
     await supabase
       .from('beta_invites')
-      .update({ status: 'accepted', used: true, used_by: email, used_at: new Date().toISOString() })
-      .eq('email', email)
+      .update({ status: 'accepted', used: true, used_by: normalizedEmail, used_at: new Date().toISOString() })
+      .ilike('email', normalizedEmail)
   }
 
   // Activate all pending client invites for this email
@@ -94,7 +93,7 @@ export async function POST(req: NextRequest) {
     await supabase
       .from('creator_clients')
       .update({ client_id: userId, status: 'active' })
-      .eq('client_email', email)
+      .ilike('client_email', normalizedEmail)
       .eq('status', 'pending')
   }
 

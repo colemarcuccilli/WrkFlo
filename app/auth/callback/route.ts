@@ -23,17 +23,51 @@ export async function GET(request: NextRequest) {
           .eq('id', user.id)
           .single()
 
+        // Check if this user has a beta invite
+        const normalizedEmail = (user.email || '').toLowerCase().trim()
+        const { data: betaInvite } = await serviceClient
+          .from('beta_invites')
+          .select('id')
+          .ilike('email', normalizedEmail)
+          .eq('used', false)
+          .maybeSingle()
+
+        const isBetaUser = !!betaInvite
+
         if (!existingUserProfile) {
+          // Determine role: beta invite → creator, explicit role param, or default
+          const assignedRole = isBetaUser ? 'creator' : (role === 'client' ? 'client' : 'creator')
           await serviceClient.from('users').insert({
             id: user.id,
             email: user.email,
             name: user.user_metadata?.full_name || user.email?.split('@')[0],
-            role: user.user_metadata?.role || 'creator',
+            role: assignedRole,
           })
+        } else if (isBetaUser && existingUserProfile) {
+          // Existing user with unused beta invite — upgrade to creator
+          const { data: currentRole } = await serviceClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+          if (currentRole?.role !== 'creator') {
+            await serviceClient
+              .from('users')
+              .update({ role: 'creator' })
+              .eq('id', user.id)
+          }
+        }
+
+        // Mark beta invite as used
+        if (isBetaUser) {
+          await serviceClient
+            .from('beta_invites')
+            .update({ status: 'accepted', used: true, used_by: normalizedEmail, used_at: new Date().toISOString() })
+            .ilike('email', normalizedEmail)
         }
 
         // If signing up as a client (from /join page), set role and activate invites
-        if (role === 'client') {
+        if (role === 'client' && !isBetaUser) {
           // Check current role — NEVER downgrade a creator to client
           const { data: existingProfile } = await serviceClient
             .from('users')
@@ -69,6 +103,11 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(`${origin}/dashboard`)
           }
           return NextResponse.redirect(`${origin}/client-dashboard`)
+        }
+
+        // Beta users always go to creator dashboard
+        if (isBetaUser) {
+          return NextResponse.redirect(`${origin}/dashboard`)
         }
 
         // If there's an explicit redirect, use it

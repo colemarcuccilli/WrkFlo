@@ -12,9 +12,8 @@ export default function JoinPage() {
   const searchParams = useSearchParams()
   const inviteEmail = searchParams.get('email') || ''
   const from = searchParams.get('from') || ''
-  const isBeta = searchParams.get('beta') === 'true'
-  const role = searchParams.get('role') || 'client'
-  const isCreator = isBeta || role === 'creator'
+  const isBetaParam = searchParams.get('beta') === 'true'
+  const roleParam = searchParams.get('role') || 'client'
 
   const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [email, setEmail] = useState(inviteEmail)
@@ -23,8 +22,43 @@ export default function JoinPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [detectedBeta, setDetectedBeta] = useState(isBetaParam)
+  const [detectedClient, setDetectedClient] = useState(!isBetaParam && roleParam === 'client')
+  const [checking, setChecking] = useState(false)
+
+  const isBeta = detectedBeta || isBetaParam
+  const isCreator = isBeta || roleParam === 'creator'
 
   const supabase = createClient()
+
+  // Auto-detect invite type when email changes
+  async function checkInvite(emailToCheck: string) {
+    if (!emailToCheck || emailToCheck.length < 5) return
+    setChecking(true)
+    try {
+      const res = await fetch('/api/join/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToCheck }),
+      })
+      const data = await res.json()
+      if (data.isBeta) {
+        setDetectedBeta(true)
+        setDetectedClient(false)
+      } else if (data.isClient) {
+        setDetectedBeta(false)
+        setDetectedClient(true)
+      }
+    } catch {}
+    setChecking(false)
+  }
+
+  // Auto-check invite on load if email is pre-filled
+  useEffect(() => {
+    if (inviteEmail && !isBetaParam) {
+      checkInvite(inviteEmail)
+    }
+  }, [inviteEmail])
 
   // Check if user is already logged in
   useEffect(() => {
@@ -220,7 +254,7 @@ export default function JoinPage() {
                   color: '#fff', fontSize: 14, outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
                 }}
                 onFocus={e => { e.currentTarget.style.borderColor = `rgba(21,243,236,0.5)`; e.currentTarget.style.boxShadow = `0 0 0 3px rgba(21,243,236,0.1)`; }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none'; checkInvite(email); }}
               />
             </div>
             <div>

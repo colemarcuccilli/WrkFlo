@@ -9,14 +9,32 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Check current role — NEVER downgrade a creator to client
+  // Check if user has a beta invite — they should be creator, not client
+  const normalizedEmail = (user.email || '').toLowerCase().trim()
+  const { data: betaInvite } = await supabase
+    .from('beta_invites')
+    .select('id')
+    .ilike('email', normalizedEmail)
+    .maybeSingle()
+
   const { data: profile } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'creator') {
+  // Beta invitees get creator role, others get client (never downgrade creator)
+  if (betaInvite && profile?.role !== 'creator') {
+    await supabase
+      .from('users')
+      .update({ role: 'creator' })
+      .eq('id', user.id)
+    // Mark beta invite as used
+    await supabase
+      .from('beta_invites')
+      .update({ status: 'accepted', used: true, used_by: normalizedEmail, used_at: new Date().toISOString() })
+      .ilike('email', normalizedEmail)
+  } else if (!betaInvite && profile?.role !== 'creator') {
     await supabase
       .from('users')
       .update({ role: 'client' })
